@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>FORMATEAR TEXTO SHOTSPOTTER</title>
+
+<style>
+  body {
+    background-color: #1A0E3D;
+    color: #E6E6FA;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+  }
+
+  h2 {
+    color: #7FFF00;
+    text-align: center;
+    font-size: 2em;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  #title span {
+    display: inline-block;
+    animation: float 2s ease-in-out infinite;
+  }
+
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    background-color: #2E1A5C;
+    color: #E6E6FA;
+    border: 2px solid #7FFF00;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  button {
+    background-color: #7FFF00;
+    color: #1A0E3D;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px 5px 15px 0;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  button:hover {
+    background-color: #5FCC00;
+  }
+
+  #output {
+    background-color: #2E1A5C;
+    color: #E6E6FA;
+    border: 2px solid #7FFF00;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #log {
+    margin-top: 20px;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 2px solid #7FFF00;
+    padding: 10px;
+    background-color: #1F0F4B;
+    font-family: monospace;
+    white-space: pre;
+  }
+
+  .log-entry {
+    padding: 5px;
+    border-bottom: 1px solid #7FFF00;
+  }
+
+  .timestamp {
+    color: #AAAAAA;
+    margin-right: 10px;
+    user-select: none;
+  }
+
+  .log-content {
+    user-select: text;
+    color: #E6E6FA;
+  }
+
+  /* Floating Warning */
+  #warning {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #FF3333;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-weight: bold;
+    box-shadow: 0 0 10px #000;
+    opacity: 0;
+    transition: opacity .4s ease;
+    z-index: 9999;
+  }
+  #warning.show {
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    textarea {
+      font-size: 12px;
+    }
+
+    button {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h2 id="title">FORMATEAR TEXTO SHOTSPOTTER</h2>
+
+<textarea id="input" rows="12" placeholder="Pegar acá el incidente"></textarea>
+<br>
+
+<button onclick="convertir()">Convertir</button>
+<button onclick="limpiar()">Limpiar</button>
+<button onclick="clearLog()">Limpiar Historial</button>
+<button onclick="downloadLogCSV()">Exportar a CSV</button>
+
+<br><br>
+<textarea id="output" rows="2" placeholder="Resultado aquí..." readonly></textarea>
+
+<div id="log">
+  <strong>Historial de conversiones:</strong>
+</div>
+
+<!-- Floating Warning -->
+<div id="warning"></div>
+
+<script>
+const input = document.getElementById("input");
+const output = document.getElementById("output");
+const log = document.getElementById("log");
+
+function showWarning(msg) {
+    const w = document.getElementById("warning");
+    w.textContent = msg;
+    w.classList.add("show");
+    setTimeout(() => w.classList.remove("show"), 2500);
+}
+
+input.addEventListener("paste", function(e) {
+    input.value = "";
+    setTimeout(() => { convertir(); }, 0);
+});
+
+function convertir() {
+    if (!input.value.trim()) return;
+
+    let lines = input.value.split("\n").map(l => l.trim());
+    let line1 = lines[0] || "";
+    let line2 = lines[1] || "";
+    let line3 = lines[2] || "";
+    let line5 = lines[4] || "";
+    let line6 = lines[5] || "";
+    let line7 = lines[6] || "";
+
+    /* ID extraction (any ID xxxx-xx format) */
+    let id = (line3.match(/ID\s*([A-Za-z0-9-]+)/i) || [])[1] || "";
+
+    /* Date + time */
+    let dateTime = ((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/) || [])
+                    .slice(1).join(" ")) || "";
+
+    let empty = "";
+    let sixthLine = line6;
+
+    /* Address */
+    let address = (line1.match(/(?:en|at)\s+(.*)/i) || [])[1] || line1;
+
+    /* Round */
+    let round = (line1.match(/^(\d+)/) || [])[1] || "";
+
+    /* Beat OR Sector — now supports ñ and accents */
+    let beat = "";
+    const beatSectorMatch = line5.match(/(Beat|Sector)[:\s]*([\p{L}0-9\s]+)/iu);
+    if (beatSectorMatch) beat = beatSectorMatch[2].trim();
+
+    /* Coordinates */
+    let lat = "", lon = "";
+    const coordMatch = line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
+    if (coordMatch) {
+        lat = coordMatch[1].replace(/,/g, ".");
+        lon = coordMatch[2].replace(/,/g, ".");
+    }
+
+    /* VALIDATION */
+    if (!id || !dateTime || !address || !lat || !lon) {
+        showWarning("❗ Faltan datos esenciales. Revise el texto.");
+        return;
+    }
+
+    /* Final output */
+    let result = [id, dateTime, empty, sixthLine, address, round, beat, lat, lon].join("\t");
+    output.value = result;
+
+    /* Prevent duplicates */
+    const existing = [...document.querySelectorAll(".log-entry .log-content")]
+        .map(e => e.textContent);
+
+    if (existing.includes(result)) {
+        showWarning("⚠ Este evento ya está en el historial.");
+        return;
+    }
+
+    /* Create log entry */
+    const time = new Date().toLocaleString();
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+
+    const tsSpan = document.createElement("span");
+    tsSpan.className = "timestamp";
+    tsSpan.textContent = `[${time}]`;
+
+    const contentSpan = document.createElement("span");
+    contentSpan.className = "log-content";
+    contentSpan.textContent = result;
+
+    entry.appendChild(tsSpan);
+    entry.appendChild(contentSpan);
+
+    /* Insert chronologically — earliest at top */
+    const entries = [...document.querySelectorAll(".log-entry")];
+    let inserted = false;
+
+    const newDate = dateTimeToObj(result.split("\t")[1]);
+
+    for (let existingEntry of entries) {
+        const existingText = existingEntry.querySelector(".log-content").textContent;
+        const existingDateTimeStr = existingText.split("\t")[1];
+        const existingDate = dateTimeToObj(existingDateTimeStr);
+
+        if (newDate < existingDate) {
+            log.insertBefore(entry, existingEntry);
+            inserted = true;
+            break;
+        }
+    }
+
+    if (!inserted) log.appendChild(entry);
+
+    output.focus();
+    output.select();
+}
+
+function dateTimeToObj(dateTimeStr) {
+    const [date, time] = dateTimeStr.split(" ");
+    const [d, m, y] = date.split("/").map(Number);
+    const [hh, mm, ss] = time.split(":").map(Number);
+    return new Date(y, m - 1, d, hh, mm, ss);
+}
+
+function limpiar() {
+    input.value = "";
+    output.value = "";
+    input.focus();
+}
+
+function clearLog() {
+    log.innerHTML = "<strong>Historial de conversiones:</strong>";
+}
+
+function downloadLogCSV() {
+    let rows = [];
+    let logContents = document.querySelectorAll(".log-entry .log-content");
+
+    if (logContents.length === 0) {
+        showWarning("⚠ No hay datos en el historial.");
+        return;
+    }
+
+    logContents.forEach(entry => {
+        rows.push([entry.textContent]);
+    });
+
+    const firstLog = logContents[0].textContent;
+    let logDate = "sinfecha";
+    const parts = firstLog.split("\t");
+
+    if (parts.length > 1 && parts[1].trim() !== "") {
+        const dateParts = parts[1].split("/");
+        if (dateParts.length === 3) {
+            logDate =
+                `${dateParts[2]}-${dateParts[1].padStart(2,'0')}-${dateParts[0].padStart(2,'0')}`;
+        } else {
+            logDate = parts[1].replace(/\s/g,"_");
+        }
+    }
+
+    let csvContent = rows.map(r => r.join(",")).join("\n");
+    let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    let url = URL.createObjectURL(blob);
+
+    const fileName = `eventosshot_${logDate}.csv`;
+
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+/* Floating title effect */
+const title = document.getElementById("title");
+const text = title.textContent;
+title.textContent = "";
+for (let i = 0; i < text.length; i++) {
+    const span = document.createElement("span");
+    span.textContent = text[i];
+    span.style.animationDelay = (Math.random() * 1.5) + "s";
+    title.appendChild(span);
+}
+</script>
+
+</body>
+</html>
