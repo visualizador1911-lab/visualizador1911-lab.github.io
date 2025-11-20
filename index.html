@@ -188,10 +188,13 @@ function convertir() {
     /* Round */
     let round = (line1.match(/^(\d+)/) || [])[1] || "";
 
-    /* Beat OR Sector — now supports ñ and accents */
+    /* ✔ Beat / Sector — capture ENTIRE remaining content of the line */
     let beat = "";
-    const beatSectorMatch = line5.match(/(Beat|Sector)[:\s]*([\p{L}0-9\s]+)/iu);
-    if (beatSectorMatch) beat = beatSectorMatch[2].trim();
+    let beatSectorMatch = line5.match(/\b(Beat|Sector)\b[:\s]*(.*)$/iu);
+
+    if (beatSectorMatch) {
+        beat = beatSectorMatch[2].trim();
+    }
 
     /* Coordinates */
     let lat = "", lon = "";
