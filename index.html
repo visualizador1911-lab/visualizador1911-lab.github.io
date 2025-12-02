@@ -64,8 +64,19 @@
     max-width: 100%;
   }
 
+  /* COUNTER — updated again */
+  #counter {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* same font as title */
+    font-size: 1.5em;
+    font-weight: bold;
+    text-transform: uppercase; /* ALL CAPS */
+    margin: 10px 0 10px 0;
+    color: #FF8C00; /* Neon orange */
+    text-shadow: 0 0 6px #FF8C00, 0 0 12px #FF6600;
+  }
+
   #log {
-    margin-top: 20px;
+    margin-top: 10px;
     max-height: 250px;
     overflow-y: auto;
     border: 2px solid #7FFF00;
@@ -137,6 +148,9 @@
 <br><br>
 <textarea id="output" rows="2" placeholder="Resultado aquí..." readonly></textarea>
 
+<!-- Counter -->
+<div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
+
 <div id="log">
   <strong>Historial de conversiones:</strong>
 </div>
@@ -148,6 +162,12 @@
 const input = document.getElementById("input");
 const output = document.getElementById("output");
 const log = document.getElementById("log");
+const counter = document.getElementById("counter");
+
+function updateCounter() {
+    const count = document.querySelectorAll(".log-entry").length;
+    counter.textContent = "CANTIDAD DE EVENTOS CARGADOS: " + count;
+}
 
 function showWarning(msg) {
     const w = document.getElementById("warning");
@@ -172,31 +192,19 @@ function convertir() {
     let line6 = lines[5] || "";
     let line7 = lines[6] || "";
 
-    /* ID extraction (any ID xxxx-xx format) */
     let id = (line3.match(/ID\s*([A-Za-z0-9-]+)/i) || [])[1] || "";
-
-    /* Date + time */
     let dateTime = ((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/) || [])
                     .slice(1).join(" ")) || "";
 
     let empty = "";
     let sixthLine = line6;
-
-    /* Address */
     let address = (line1.match(/(?:en|at)\s+(.*)/i) || [])[1] || line1;
-
-    /* Round */
     let round = (line1.match(/^(\d+)/) || [])[1] || "";
 
-    /* ✔ Beat / Sector — capture ENTIRE remaining content of the line */
     let beat = "";
     let beatSectorMatch = line5.match(/\b(Beat|Sector)\b[:\s]*(.*)$/iu);
+    if (beatSectorMatch) beat = beatSectorMatch[2].trim();
 
-    if (beatSectorMatch) {
-        beat = beatSectorMatch[2].trim();
-    }
-
-    /* Coordinates */
     let lat = "", lon = "";
     const coordMatch = line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
     if (coordMatch) {
@@ -204,26 +212,20 @@ function convertir() {
         lon = coordMatch[2].replace(/,/g, ".");
     }
 
-    /* VALIDATION */
     if (!id || !dateTime || !address || !lat || !lon) {
         showWarning("❗ Faltan datos esenciales. Revise el texto.");
         return;
     }
 
-    /* Final output */
     let result = [id, dateTime, empty, sixthLine, address, round, beat, lat, lon].join("\t");
     output.value = result;
 
-    /* Prevent duplicates */
-    const existing = [...document.querySelectorAll(".log-entry .log-content")]
-        .map(e => e.textContent);
-
+    const existing = [...document.querySelectorAll(".log-entry .log-content")].map(e => e.textContent);
     if (existing.includes(result)) {
         showWarning("⚠ Este evento ya está en el historial.");
         return;
     }
 
-    /* Create log entry */
     const time = new Date().toLocaleString();
     const entry = document.createElement("div");
     entry.className = "log-entry";
@@ -239,7 +241,6 @@ function convertir() {
     entry.appendChild(tsSpan);
     entry.appendChild(contentSpan);
 
-    /* Insert chronologically — earliest at top */
     const entries = [...document.querySelectorAll(".log-entry")];
     let inserted = false;
 
@@ -258,6 +259,8 @@ function convertir() {
     }
 
     if (!inserted) log.appendChild(entry);
+
+    updateCounter();
 
     output.focus();
     output.select();
@@ -278,6 +281,7 @@ function limpiar() {
 
 function clearLog() {
     log.innerHTML = "<strong>Historial de conversiones:</strong>";
+    updateCounter();
 }
 
 function downloadLogCSV() {
@@ -289,9 +293,7 @@ function downloadLogCSV() {
         return;
     }
 
-    logContents.forEach(entry => {
-        rows.push([entry.textContent]);
-    });
+    logContents.forEach(entry => rows.push([entry.textContent]));
 
     const firstLog = logContents[0].textContent;
     let logDate = "sinfecha";
