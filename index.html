@@ -66,12 +66,12 @@
 
   /* COUNTER — updated again */
   #counter {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* same font as title */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 1.5em;
     font-weight: bold;
-    text-transform: uppercase; /* ALL CAPS */
+    text-transform: uppercase;
     margin: 10px 0 10px 0;
-    color: #FF8C00; /* Neon orange */
+    color: #FF8C00;
     text-shadow: 0 0 6px #FF8C00, 0 0 12px #FF6600;
   }
 
@@ -121,6 +121,16 @@
     opacity: 1;
   }
 
+  /* NEW label for "Control+Shift+V" */
+  #pasteHint {
+    margin-top: 12px;
+    font-size: 1.2em;
+    color: rgba(127, 255, 0, 0.75); /* Neon green translucent */
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 0 6px rgba(127, 255, 0, 0.8), 0 0 12px rgba(95, 204, 0, 0.8);
+  }
+
   @media (max-width: 768px) {
     textarea {
       font-size: 12px;
@@ -154,6 +164,9 @@
 <div id="log">
   <strong>Historial de conversiones:</strong>
 </div>
+
+<!-- NEW label -->
+<div id="pasteHint">Pegar en planilla utilizando Control+Shift+V</div>
 
 <!-- Floating Warning -->
 <div id="warning"></div>
