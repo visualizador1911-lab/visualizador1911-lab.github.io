@@ -5,7 +5,6 @@
 <title>FORMATEAR TEXTO SHOTSPOTTER</title>
 
 <style>
-
   /* CUSTOM CURSOR APPLIED TO EVERYTHING */
   html, body, * {
       cursor: url("./CURSOR.cur"), auto;
@@ -144,7 +143,6 @@
       font-size: 12px;
     }
   }
-
 </style>
 </head>
 <body>
@@ -199,12 +197,21 @@ function convertir() {
     if (!input.value.trim()) return;
 
     let lines = input.value.split("\n").map(l => l.trim());
+
     let line1 = lines[0] || "";
-    let line2 = lines[1] || "";
-    let line3 = lines[2] || "";
-    let line5 = lines[4] || "";
-    let line6 = lines[5] || "";
-    let line7 = lines[6] || "";
+    let line2 = lines[2] || "";
+    let line3 = lines[3] || "";
+    let line5, line6, line7;
+
+    if (lines.length === 8) {
+        line5 = lines[4] || "";
+        line6 = lines[5] || "";
+        line7 = lines[6] || "";
+    } else { // assume 9 lines
+        line5 = lines[5] || "";
+        line6 = lines[6] || "";
+        line7 = lines[7] || "";
+    }
 
     let id = (line3.match(/ID\s*([A-Za-z0-9-]+)/i) || [])[1] || "";
     let dateTime = ((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/) || [])
@@ -349,5 +356,3 @@ for (let i = 0; i < text.length; i++) {
 
 </body>
 </html>
-
-
