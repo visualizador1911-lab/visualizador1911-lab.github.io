@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -22,6 +23,46 @@ button:hover { background-color: #5FCC00; }
 #warning.show { opacity: 1; }
 #pasteHint { margin-top: 12px; font-size: 1.2em; color: rgba(127, 255, 0, 0.75); font-weight: bold; text-align: center; text-shadow: 0 0 6px rgba(127, 255, 0, 0.8), 0 0 12px rgba(95, 204, 0, 0.8); }
 @media (max-width: 768px) { textarea { font-size: 12px; } button { padding: 8px 12px; font-size: 12px; } }
+
+/* ROUNDS ANIMATION */
+#roundsAnimationContainer {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    max-width: 90%;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.rounds-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    animation: fadeInOut 5s forwards;
+}
+
+.rounds-text {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #FF5555;
+    text-shadow: 0 0 6px red;
+}
+
+.rounds-bullet {
+    width: 32px;
+    height: 32px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
 </style>
 </head>
 <body>
@@ -43,28 +84,89 @@ button:hover { background-color: #5FCC00; }
 <div id="pasteHint">Pegar en planilla utilizando Control+Shift+V</div>
 <div id="warning"></div>
 
+<!-- Rounds animation container -->
+<div id="roundsAnimationContainer"></div>
+
 <script>
 const input = document.getElementById("input");
 const output = document.getElementById("output");
 const log = document.getElementById("log");
 const counter = document.getElementById("counter");
 
+// Heatmap-style rounds color
+function roundsToColor(rounds) {
+    let n = parseInt(rounds);
+    if (isNaN(n)) return "color:#E6E6FA;";
+    if (n <= 2) return "color:#E6E6FA;";
+
+    let t = Math.min(Math.max((n - 3) / 7, 0), 1);
+    let r, g, b;
+    if (t < 0.5) {
+        let k = t / 0.5;
+        r = 255;
+        g = Math.floor(255 - 127 * k);
+        b = 0;
+    } else {
+        let k = (t - 0.5) / 0.5;
+        r = 255;
+        g = Math.floor(128 - 128 * k);
+        b = 0;
+    }
+    return `color: rgb(${r},${g},${b});`;
+}
+
+// Rounds animation
+function animateRounds(rounds) {
+    rounds = parseInt(rounds);
+    if (!rounds || rounds <= 0) return;
+
+    const container = document.getElementById("roundsAnimationContainer");
+    container.innerHTML = "";
+
+    const line = document.createElement("div");
+    line.className = "rounds-line";
+
+    const label = document.createElement("span");
+    label.className = "rounds-text";
+    label.textContent = `Rondas × ${rounds}`;
+
+    line.appendChild(label);
+    container.appendChild(line);
+
+    const baseDelay = 120;
+    const speed = Math.max(25, baseDelay - rounds * 8);
+
+    for (let i = 0; i < rounds; i++) {
+        const img = document.createElement("img");
+        img.src = "./balita.png";
+        img.className = "rounds-bullet";
+        line.appendChild(img);
+
+        setTimeout(() => {
+            img.style.opacity = "1";
+            img.style.transform = "scale(1)";
+        }, i * speed);
+    }
+
+    setTimeout(() => { container.innerHTML = ""; }, 5000);
+}
+
+// Helper functions
 function updateCounter() {
     counter.textContent = "CANTIDAD DE EVENTOS CARGADOS: " + document.querySelectorAll(".log-entry").length;
 }
-
 function showWarning(msg) {
     const w = document.getElementById("warning");
     w.textContent = msg;
     w.classList.add("show");
     setTimeout(() => w.classList.remove("show"), 2500);
 }
-
 input.addEventListener("paste", function() {
     input.value = "";
     setTimeout(() => { convertir(); }, 0);
 });
 
+// Main conversion
 function convertir() {
     if (!input.value.trim()) return;
     let lines = input.value.split("\n").map(l => l.trim());
@@ -101,14 +203,23 @@ function convertir() {
     const coordMatch = line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
     if (coordMatch) { lat = coordMatch[1].replace(/,/g, "."); lon = coordMatch[2].replace(/,/g, "."); }
 
-    if (!id) { showWarning("❗ Error en el campo ID"); return; }
-    if (!dateTime) { showWarning("❗ Error en el campo Fecha"); return; }
-    if (!address) { showWarning("❗ Error en el campo direccion"); return; }
-    if (!lat || !lon) { showWarning("❗ Error en los campos X Y"); return; }
+    // Unified validation
+    let missing = [];
+    if (!id) missing.push("ID");
+    if (!dateTime) missing.push("Fecha/Hora");
+    if (!address) missing.push("Dirección");
+    if (!lat) missing.push("Latitud (X)");
+    if (!lon) missing.push("Longitud (Y)");
+    if (missing.length > 0) {
+        showWarning("❗ Campos faltantes: " + missing.join(", "));
+        return;
+    }
 
     let resultArray = [id, dateTime, "", sixthLine, address, round, beat, lat, lon, "", "", sivve || ""];
     let result = resultArray.join("\t");
     output.value = result;
+
+    animateRounds(round);
 
     const existing = [...document.querySelectorAll(".log-entry .log-content")].map(e => e.textContent);
     if (existing.includes(result)) { showWarning("⚠ Este evento ya está en el historial."); return; }
@@ -116,27 +227,42 @@ function convertir() {
     const time = new Date().toLocaleString();
     const entry = document.createElement("div");
     entry.className = "log-entry";
+
     const tsSpan = document.createElement("span");
     tsSpan.className = "timestamp";
     tsSpan.textContent = `[${time}]`;
+
     const contentSpan = document.createElement("span");
     contentSpan.className = "log-content";
-    contentSpan.textContent = result;
+
+    const fields = result.split("\t");
+    const roundsValue = fields[5];
+
+    fields[5] = `<span style="${roundsToColor(roundsValue)} ${roundsValue >= 10 ? 'font-weight:bold;' : ''}">${roundsValue}</span>`;
+    contentSpan.innerHTML = fields.join("\t");
+
     entry.appendChild(tsSpan);
     entry.appendChild(contentSpan);
 
     const entries = [...document.querySelectorAll(".log-entry")];
     let inserted = false;
     const newDate = dateTimeToObj(resultArray[1]);
+
     for (let existingEntry of entries) {
         const existingText = existingEntry.querySelector(".log-content").textContent;
         const existingDateTimeStr = existingText.split("\t")[1];
         const existingDate = dateTimeToObj(existingDateTimeStr);
-        if (newDate < existingDate) { log.insertBefore(entry, existingEntry); inserted = true; break; }
+        if (newDate < existingDate) { 
+            log.insertBefore(entry, existingEntry); 
+            inserted = true; 
+            break; 
+        }
     }
     if (!inserted) log.appendChild(entry);
+
     updateCounter();
-    output.focus(); output.select();
+    output.focus(); 
+    output.select();
 }
 
 function dateTimeToObj(dateTimeStr) {
@@ -165,8 +291,10 @@ function downloadLogCSV() {
     const parts = firstLog.split("\t");
     if (parts.length > 1 && parts[1].trim() !== "") {
         const dateParts = parts[1].split("/");
-        if (dateParts.length === 3) logDate = `${dateParts[2]}-${dateParts[1].padStart(2,'0')}-${dateParts[0].padStart(2,'0')}`;
-        else logDate = parts[1].replace(/\s/g,"_");
+        if (dateParts.length === 3) 
+            logDate = `${dateParts[2]}-${dateParts[1].padStart(2,'0')}-${dateParts[0].padStart(2,'0')}`;
+        else 
+            logDate = parts[1].replace(/\s/g,"_");
     }
 
     let csvContent = rows.join("\n");
@@ -182,6 +310,7 @@ function downloadLogCSV() {
 const title = document.getElementById("title");
 const text = title.textContent;
 title.textContent = "";
+
 for (let i = 0; i < text.length; i++) {
     const span = document.createElement("span");
     span.textContent = text[i];
