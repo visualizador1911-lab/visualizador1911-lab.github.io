@@ -3,146 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <title>FORMATEAR TEXTO SHOTSPOTTER</title>
-
 <style>
-  /* CUSTOM CURSOR APPLIED TO EVERYTHING */
-  html, body, * {
-      cursor: url("./CURSOR.cur"), auto;
-  }
-
-  body {
-    background-color: #1A0E3D;
-    color: #E6E6FA;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px;
-  }
-
-  h2 {
-    color: #7FFF00;
-    text-align: center;
-    font-size: 2em;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
-
-  #title span {
-    display: inline-block;
-    animation: float 2s ease-in-out infinite;
-  }
-
-  textarea {
-    width: 100%;
-    max-width: 100%;
-    background-color: #2E1A5C;
-    color: #E6E6FA;
-    border: 2px solid #7FFF00;
-    padding: 10px;
-    font-family: monospace;
-    font-size: 14px;
-    resize: vertical;
-    box-sizing: border-box;
-  }
-
-  button {
-    background-color: #7FFF00;
-    color: #1A0E3D;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px 5px 15px 0;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  button:hover {
-    background-color: #5FCC00;
-  }
-
-  #output {
-    background-color: #2E1A5C;
-    color: #E6E6FA;
-    border: 2px solid #7FFF00;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  #counter {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 1.5em;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin: 10px 0 10px 0;
-    color: #FF8C00;
-    text-shadow: 0 0 6px #FF8C00, 0 0 12px #FF6600;
-  }
-
-  #log {
-    margin-top: 10px;
-    max-height: 250px;
-    overflow-y: auto;
-    border: 2px solid #7FFF00;
-    padding: 10px;
-    background-color: #1F0F4B;
-    font-family: monospace;
-    white-space: pre;
-  }
-
-  .log-entry {
-    padding: 5px;
-    border-bottom: 1px solid #7FFF00;
-  }
-
-  .timestamp {
-    color: #AAAAAA;
-    margin-right: 10px;
-    user-select: none;
-  }
-
-  .log-content {
-    user-select: text;
-    color: #E6E6FA;
-  }
-
-  #warning {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #FF3333;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 6px;
-    font-weight: bold;
-    box-shadow: 0 0 10px #000;
-    opacity: 0;
-    transition: opacity .4s ease;
-    z-index: 9999;
-  }
-  #warning.show {
-    opacity: 1;
-  }
-
-  #pasteHint {
-    margin-top: 12px;
-    font-size: 1.2em;
-    color: rgba(127, 255, 0, 0.75);
-    font-weight: bold;
-    text-align: center;
-    text-shadow: 0 0 6px rgba(127, 255, 0, 0.8), 0 0 12px rgba(95, 204, 0, 0.8);
-  }
-
-  @media (max-width: 768px) {
-    textarea {
-      font-size: 12px;
-    }
-
-    button {
-      padding: 8px 12px;
-      font-size: 12px;
-    }
-  }
+html, body, * { cursor: url("./CURSOR.cur"), auto; }
+body { background-color: #1A0E3D; color: #E6E6FA; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; }
+h2 { color: #7FFF00; text-align: center; font-size: 2em; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+#title span { display: inline-block; animation: float 2s ease-in-out infinite; }
+textarea { width: 100%; max-width: 100%; background-color: #2E1A5C; color: #E6E6FA; border: 2px solid #7FFF00; padding: 10px; font-family: monospace; font-size: 14px; resize: vertical; box-sizing: border-box; }
+button { background-color: #7FFF00; color: #1A0E3D; border: none; padding: 10px 20px; margin: 5px 5px 15px 0; font-weight: bold; cursor: pointer; transition: 0.2s; }
+button:hover { background-color: #5FCC00; }
+#output { background-color: #2E1A5C; color: #E6E6FA; border: 2px solid #7FFF00; width: 100%; max-width: 100%; }
+#counter { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 1.5em; font-weight: bold; text-transform: uppercase; margin: 10px 0 10px 0; color: #FF8C00; text-shadow: 0 0 6px #FF8C00, 0 0 12px #FF6600; }
+#log { margin-top: 10px; max-height: 250px; overflow-y: auto; border: 2px solid #7FFF00; padding: 10px; background-color: #1F0F4B; font-family: monospace; white-space: pre; }
+.log-entry { padding: 5px; border-bottom: 1px solid #7FFF00; }
+.timestamp { color: #AAAAAA; margin-right: 10px; user-select: none; }
+.log-content { user-select: text; color: #E6E6FA; }
+#warning { position: fixed; top: 20px; right: 20px; background: #FF3333; color: white; padding: 12px 18px; border-radius: 6px; font-weight: bold; box-shadow: 0 0 10px #000; opacity: 0; transition: opacity .4s ease; z-index: 9999; }
+#warning.show { opacity: 1; }
+#pasteHint { margin-top: 12px; font-size: 1.2em; color: rgba(127, 255, 0, 0.75); font-weight: bold; text-align: center; text-shadow: 0 0 6px rgba(127, 255, 0, 0.8), 0 0 12px rgba(95, 204, 0, 0.8); }
+@media (max-width: 768px) { textarea { font-size: 12px; } button { padding: 8px 12px; font-size: 12px; } }
 </style>
 </head>
 <body>
@@ -151,23 +30,17 @@
 
 <textarea id="input" rows="12" placeholder="Pegar acá el incidente"></textarea>
 <br>
-
 <button onclick="convertir()">Convertir</button>
 <button onclick="limpiar()">Limpiar</button>
 <button onclick="clearLog()">Limpiar Historial</button>
 <button onclick="downloadLogCSV()">Exportar a CSV</button>
-
 <br><br>
 <textarea id="output" rows="2" placeholder="Resultado aquí..." readonly></textarea>
 
 <div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
 
-<div id="log">
-  <strong>Historial de conversiones:</strong>
-</div>
-
+<div id="log"><strong>Historial de conversiones:</strong></div>
 <div id="pasteHint">Pegar en planilla utilizando Control+Shift+V</div>
-
 <div id="warning"></div>
 
 <script>
@@ -177,8 +50,7 @@ const log = document.getElementById("log");
 const counter = document.getElementById("counter");
 
 function updateCounter() {
-    const count = document.querySelectorAll(".log-entry").length;
-    counter.textContent = "CANTIDAD DE EVENTOS CARGADOS: " + count;
+    counter.textContent = "CANTIDAD DE EVENTOS CARGADOS: " + document.querySelectorAll(".log-entry").length;
 }
 
 function showWarning(msg) {
@@ -188,36 +60,35 @@ function showWarning(msg) {
     setTimeout(() => w.classList.remove("show"), 2500);
 }
 
-input.addEventListener("paste", function(e) {
+input.addEventListener("paste", function() {
     input.value = "";
     setTimeout(() => { convertir(); }, 0);
 });
 
 function convertir() {
     if (!input.value.trim()) return;
-
     let lines = input.value.split("\n").map(l => l.trim());
 
     let line1 = lines[0] || "";
     let line2 = lines[2] || "";
     let line3 = lines[3] || "";
-    let line5, line6, line7;
+    let line5, line6, line7, sivve = "";
 
     if (lines.length === 8) {
         line5 = lines[4] || "";
         line6 = lines[5] || "";
         line7 = lines[6] || "";
-    } else { // assume 9 lines
+    } else if (lines.length === 9) {
         line5 = lines[5] || "";
         line6 = lines[6] || "";
         line7 = lines[7] || "";
+        let lineWithCAD = lines[4] || ""; 
+        const sivveMatch = lineWithCAD.match(/CAD\s*ID\s*(\d{8})/i);
+        sivve = sivveMatch ? sivveMatch[1] : "";
     }
 
     let id = (line3.match(/ID\s*([A-Za-z0-9-]+)/i) || [])[1] || "";
-    let dateTime = ((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/) || [])
-                    .slice(1).join(" ")) || "";
-
-    let empty = "";
+    let dateTime = ((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/) || []).slice(1).join(" ")) || "";
     let sixthLine = line6;
     let address = (line1.match(/(?:en|at)\s+(.*)/i) || [])[1] || line1;
     let round = (line1.match(/^(\d+)/) || [])[1] || "";
@@ -228,63 +99,44 @@ function convertir() {
 
     let lat = "", lon = "";
     const coordMatch = line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
-    if (coordMatch) {
-        lat = coordMatch[1].replace(/,/g, ".");
-        lon = coordMatch[2].replace(/,/g, ".");
-    }
+    if (coordMatch) { lat = coordMatch[1].replace(/,/g, "."); lon = coordMatch[2].replace(/,/g, "."); }
 
-    if (!id || !dateTime || !address || !lat || !lon) {
-        showWarning("❗ Faltan datos esenciales. Revise el texto.");
-        return;
-    }
+    if (!id) { showWarning("❗ Error en el campo ID"); return; }
+    if (!dateTime) { showWarning("❗ Error en el campo Fecha"); return; }
+    if (!address) { showWarning("❗ Error en el campo direccion"); return; }
+    if (!lat || !lon) { showWarning("❗ Error en los campos X Y"); return; }
 
-    let result = [id, dateTime, empty, sixthLine, address, round, beat, lat, lon].join("\t");
+    let resultArray = [id, dateTime, "", sixthLine, address, round, beat, lat, lon, "", "", sivve || ""];
+    let result = resultArray.join("\t");
     output.value = result;
 
     const existing = [...document.querySelectorAll(".log-entry .log-content")].map(e => e.textContent);
-    if (existing.includes(result)) {
-        showWarning("⚠ Este evento ya está en el historial.");
-        return;
-    }
+    if (existing.includes(result)) { showWarning("⚠ Este evento ya está en el historial."); return; }
 
     const time = new Date().toLocaleString();
     const entry = document.createElement("div");
     entry.className = "log-entry";
-
     const tsSpan = document.createElement("span");
     tsSpan.className = "timestamp";
     tsSpan.textContent = `[${time}]`;
-
     const contentSpan = document.createElement("span");
     contentSpan.className = "log-content";
     contentSpan.textContent = result;
-
     entry.appendChild(tsSpan);
     entry.appendChild(contentSpan);
 
     const entries = [...document.querySelectorAll(".log-entry")];
     let inserted = false;
-
-    const newDate = dateTimeToObj(result.split("\t")[1]);
-
+    const newDate = dateTimeToObj(resultArray[1]);
     for (let existingEntry of entries) {
         const existingText = existingEntry.querySelector(".log-content").textContent;
         const existingDateTimeStr = existingText.split("\t")[1];
         const existingDate = dateTimeToObj(existingDateTimeStr);
-
-        if (newDate < existingDate) {
-            log.insertBefore(entry, existingEntry);
-            inserted = true;
-            break;
-        }
+        if (newDate < existingDate) { log.insertBefore(entry, existingEntry); inserted = true; break; }
     }
-
     if (!inserted) log.appendChild(entry);
-
     updateCounter();
-
-    output.focus();
-    output.select();
+    output.focus(); output.select();
 }
 
 function dateTimeToObj(dateTimeStr) {
@@ -294,51 +146,35 @@ function dateTimeToObj(dateTimeStr) {
     return new Date(y, m - 1, d, hh, mm, ss);
 }
 
-function limpiar() {
-    input.value = "";
-    output.value = "";
-    input.focus();
-}
-
-function clearLog() {
-    log.innerHTML = "<strong>Historial de conversiones:</strong>";
-    updateCounter();
-}
+function limpiar() { input.value = ""; output.value = ""; input.focus(); }
+function clearLog() { log.innerHTML = "<strong>Historial de conversiones:</strong>"; updateCounter(); }
 
 function downloadLogCSV() {
-    let rows = [];
     let logContents = document.querySelectorAll(".log-entry .log-content");
+    if (logContents.length === 0) { showWarning("⚠ No hay datos en el historial."); return; }
 
-    if (logContents.length === 0) {
-        showWarning("⚠ No hay datos en el historial.");
-        return;
-    }
-
-    logContents.forEach(entry => rows.push([entry.textContent]));
+    let rows = [];
+    logContents.forEach(entry => {
+        const fields = entry.textContent.split("\t");
+        const escaped = fields.map(f => `"${f.replace(/"/g, '""')}"`);
+        rows.push(escaped.join(","));
+    });
 
     const firstLog = logContents[0].textContent;
     let logDate = "sinfecha";
     const parts = firstLog.split("\t");
-
     if (parts.length > 1 && parts[1].trim() !== "") {
         const dateParts = parts[1].split("/");
-        if (dateParts.length === 3) {
-            logDate =
-                `${dateParts[2]}-${dateParts[1].padStart(2,'0')}-${dateParts[0].padStart(2,'0')}`;
-        } else {
-            logDate = parts[1].replace(/\s/g,"_");
-        }
+        if (dateParts.length === 3) logDate = `${dateParts[2]}-${dateParts[1].padStart(2,'0')}-${dateParts[0].padStart(2,'0')}`;
+        else logDate = parts[1].replace(/\s/g,"_");
     }
 
-    let csvContent = rows.map(r => r.join(",")).join("\n");
+    let csvContent = rows.join("\n");
     let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     let url = URL.createObjectURL(blob);
-
-    const fileName = `eventosshot_${logDate}.csv`;
-
     let a = document.createElement("a");
     a.href = url;
-    a.download = fileName;
+    a.download = `eventosshot_${logDate}.csv`;
     a.click();
     URL.revokeObjectURL(url);
 }
