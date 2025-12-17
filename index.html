@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -32,14 +31,15 @@ button:hover { background-color: #5FCC00; }
     max-width: 90%;
     z-index: 9999;
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .rounds-line {
     display: flex;
     align-items: center;
     gap: 6px;
-    opacity: 0;
-    animation: fadeInOut 5s forwards;
 }
 
 .rounds-text {
@@ -57,11 +57,23 @@ button:hover { background-color: #5FCC00; }
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-@keyframes fadeInOut {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    80% { opacity: 1; }
-    100% { opacity: 0; }
+/* Special image style (Polaroid-style) */
+.rounds-special {
+    width: 150px;
+    height: auto;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.5s ease, transform 0.5s ease, filter 0.3s ease;
+    border: 4px solid white;
+    box-shadow: 0 0 20px #fff;
+    border-radius: 8px;
+}
+
+#zonaLabel {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #7FFF00;
+    margin-right: 10px;
 }
 </style>
 </head>
@@ -93,6 +105,8 @@ const output = document.getElementById("output");
 const log = document.getElementById("log");
 const counter = document.getElementById("counter");
 
+let sixthLine = "";
+
 // Heatmap-style rounds color
 function roundsToColor(rounds) {
     let n = parseInt(rounds);
@@ -115,7 +129,7 @@ function roundsToColor(rounds) {
     return `color: rgb(${r},${g},${b});`;
 }
 
-// Rounds animation
+// Rounds animation with Zona image staying until bullets finish
 function animateRounds(rounds) {
     rounds = parseInt(rounds);
     if (!rounds || rounds <= 0) return;
@@ -126,16 +140,54 @@ function animateRounds(rounds) {
     const line = document.createElement("div");
     line.className = "rounds-line";
 
-    const label = document.createElement("span");
-    label.className = "rounds-text";
-    label.textContent = `Rondas × ${rounds}`;
+    // Zona label
+    const zonaLabel = document.createElement("span");
+    zonaLabel.id = "zonaLabel";
+    zonaLabel.textContent = "Zona:";
+    line.appendChild(zonaLabel);
 
-    line.appendChild(label);
-    container.appendChild(line);
+    // Determine special image based on sixthLine
+    let specialImgSrc = "";
+    if (sixthLine === "UYMontevideoCerro") specialImgSrc = "./cerro.png";
+    else if (sixthLine === "UYMontevideoLasAcacias") specialImgSrc = "./acacias.png";
+    else if (sixthLine === "UYMontevideoPenarol") specialImgSrc = "./penarol.png";
 
-    const baseDelay = 120;
-    const speed = Math.max(25, baseDelay - rounds * 8);
+    // Add Zona image if exists
+    let bulletsDelay = 0;
+    let specialImg = null;
+    if (specialImgSrc) {
+        specialImg = document.createElement("img");
+        specialImg.src = specialImgSrc;
+        specialImg.className = "rounds-special";
+        specialImg.style.opacity = "0";
+        specialImg.style.transform = "scale(0.5)";
+        line.appendChild(specialImg);
 
+        // Polaroid flash: scale up + bright
+        setTimeout(() => {
+            specialImg.style.opacity = "1";
+            specialImg.style.transform = "scale(1.2)";
+            specialImg.style.filter = "brightness(300%)";
+        }, 0);
+
+        // Return to normal size & brightness
+        setTimeout(() => {
+            specialImg.style.transform = "scale(1)";
+            specialImg.style.filter = "brightness(100%)";
+        }, 300);
+
+        bulletsDelay = 350; // start bullets after flash
+    }
+
+    // Rondas label
+    const roundsLabel = document.createElement("span");
+    roundsLabel.className = "rounds-text";
+    roundsLabel.textContent = `Rondas × ${rounds}`;
+    roundsLabel.style.opacity = "0";
+    setTimeout(() => { roundsLabel.style.opacity = "1"; }, bulletsDelay);
+    line.appendChild(roundsLabel);
+
+    // Show bullets one by one
     for (let i = 0; i < rounds; i++) {
         const img = document.createElement("img");
         img.src = "./balita.png";
@@ -145,10 +197,14 @@ function animateRounds(rounds) {
         setTimeout(() => {
             img.style.opacity = "1";
             img.style.transform = "scale(1)";
-        }, i * speed);
+        }, i * 120 + bulletsDelay);
     }
 
-    setTimeout(() => { container.innerHTML = ""; }, 5000);
+    container.appendChild(line);
+
+    // Remove everything after all bullets appear
+    const totalDuration = bulletsDelay + rounds * 120 + 800;
+    setTimeout(() => { container.innerHTML = ""; }, totalDuration);
 }
 
 // Helper functions
@@ -189,9 +245,10 @@ function convertir() {
         sivve = sivveMatch ? sivveMatch[1] : "";
     }
 
+    sixthLine = line6; // store sixthLine globally
+
     let id = (line3.match(/ID\s*([A-Za-z0-9-]+)/i) || [])[1] || "";
     let dateTime = ((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/) || []).slice(1).join(" ")) || "";
-    let sixthLine = line6;
     let address = (line1.match(/(?:en|at)\s+(.*)/i) || [])[1] || line1;
     let round = (line1.match(/^(\d+)/) || [])[1] || "";
 
@@ -203,7 +260,6 @@ function convertir() {
     const coordMatch = line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
     if (coordMatch) { lat = coordMatch[1].replace(/,/g, "."); lon = coordMatch[2].replace(/,/g, "."); }
 
-    // Unified validation
     let missing = [];
     if (!id) missing.push("ID");
     if (!dateTime) missing.push("Fecha/Hora");
