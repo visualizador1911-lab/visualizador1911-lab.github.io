@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>FORMATEAR TEXTO SHOTSPOTTER POR MAYOR</title>
+<style>
+html, body, * { cursor: url("./CURSOR.cur"), auto; }
+body {
+    background-color: #3E1F1F; 
+    color: #E0CFCF; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+}
+h2 { color: #B22222; text-align: center; font-size: 2em; }
+
+textarea {
+    width: 100%;
+    background: linear-gradient(145deg, #4B2B2B, #6B1F1F);
+    color: #F5E5E5; 
+    border: 2px solid #8B0000; 
+    padding: 10px;
+    font-family: monospace;
+    font-size: 14px;
+    resize: vertical;
+}
+
+button {
+    background-color: #8B0000; 
+    color: #F5E5E5; 
+    border: none;
+    padding: 10px 20px;
+    margin: 5px 5px 15px 0;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+
+button:hover { background-color: #B22222; }
+
+#counter {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #CD5C5C;
+    margin: 10px 0;
+}
+
+#log {
+    margin-top: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 2px solid #8B0000;
+    padding: 10px;
+    background: linear-gradient(145deg, #4B2B2B, #6B1F1F);
+    font-family: monospace;
+    white-space: pre;
+}
+.log-entry { border-bottom: 1px solid #8B0000; padding: 4px; }
+.log-content { user-select: text; }
+
+#warning {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #A52A2A;
+    color: #F5E5E5;
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity .4s;
+}
+#warning.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<h2>FORMATEAR TEXTO SHOTSPOTTER POR MAYOR</h2>
+
+<textarea id="input" rows="12" placeholder="Pegar acá los eventos"></textarea><br>
+
+<button onclick="limpiarTodo()">Limpiar</button>
+
+<div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
+<div id="log"></div>
+<div id="warning"></div>
+
+<script>
+const input = document.getElementById("input");
+const log = document.getElementById("log");
+const counter = document.getElementById("counter");
+
+input.addEventListener("paste", () => { setTimeout(convertirMultiple, 0); });
+
+function showWarning(msg) {
+    const w = document.getElementById("warning");
+    w.textContent = msg;
+    w.classList.add("show");
+    setTimeout(() => w.classList.remove("show"), 2500);
+}
+
+function convertirMultiple() {
+    if (!input.value.trim()) return;
+
+    let blocks = input.value.replace(/\r\n/g, "\n").trim().split(/\n\s*\n+/);
+    blocks = blocks.map(block => block.split("\n").map(l => l.trim()).filter(Boolean)).filter(b => b.length >= 7);
+
+    // Ordenar cronológicamente, pero después insertaremos al inicio para invertir
+    blocks.sort((a, b) => {
+        const dateA = a[2].match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/)?.[1];
+        const dateB = b[2].match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/)?.[1];
+        return new Date(dateA.split("/").reverse().join("-")) - new Date(dateB.split("/").reverse().join("-"));
+    });
+
+    let processed = 0;
+    blocks.forEach(block => {
+        input.value = block.join("\n");
+        convertir();
+        processed++;
+    });
+
+    input.value = "";
+    if (processed > 0) showWarning(`✔ ${processed} eventos procesados`);
+}
+
+function convertir() {
+    const lines = input.value.split("\n");
+    let id = lines[1] || "";
+    let mainLine = lines[2] || "";
+    let cadLine = lines[3] || "";
+    let barrio = lines[4] || "";
+    let coordLine = lines[6] || "";
+    let dateTime = "";
+    const dt = mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
+    if (dt) dateTime = dt[1];
+    const parts = mainLine.split("\t");
+    let address = parts[1] || "";
+    let zona = parts[2] || "";
+    let rounds = parts[3] || "";
+    let lat = "", lon = "";
+    const coords = coordLine.split("\t");
+    if (coords.length === 2) {
+        lat = coords[0].replace(",", ".");
+        lon = coords[1].replace(",", ".");
+    }
+    let cad = cadLine.match(/\d+/)?.[0] || "";
+    if (!id || !dateTime || !lat || !lon) return;
+    const resultArray = [
+        id, dateTime, "", zona, address, rounds, barrio, lat, lon, "", "", cad
+    ];
+    const result = resultArray.join("\t");
+    if ([...document.querySelectorAll(".log-entry .log-content")].some(e => e.textContent === result)) return;
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+    entry.innerHTML = `<span class="log-content">${result}</span>`;
+
+    // Insertar al inicio para que los más recientes queden arriba
+    log.insertBefore(entry, log.firstChild);
+    updateCounter();
+}
+
+function updateCounter() {
+    counter.textContent =
+        "CANTIDAD DE EVENTOS CARGADOS: " +
+        document.querySelectorAll(".log-entry").length;
+}
+
+function limpiarTodo() {
+    input.value = "";
+    log.innerHTML = "";
+    updateCounter();
+}
+</script>
+
+</body>
+</html>
