@@ -80,6 +80,7 @@ button:hover { background-color: #B22222; }
 <textarea id="input" rows="12" placeholder="Pegar acá los eventos"></textarea><br>
 
 <button onclick="limpiarTodo()">Limpiar</button>
+<button onclick="revertLog()">Invertir Orden Cronológico</button>
 
 <div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
 <div id="log"></div>
@@ -90,7 +91,7 @@ const input = document.getElementById("input");
 const log = document.getElementById("log");
 const counter = document.getElementById("counter");
 
-input.addEventListener("paste", () => { setTimeout(convertirMultiple, 0); });
+input.addEventListener("paste", () => { setTimeout(processInput, 0); });
 
 function showWarning(msg) {
     const w = document.getElementById("warning");
@@ -99,64 +100,59 @@ function showWarning(msg) {
     setTimeout(() => w.classList.remove("show"), 2500);
 }
 
-function convertirMultiple() {
+function processInput() {
     if (!input.value.trim()) return;
 
     let blocks = input.value.replace(/\r\n/g, "\n").trim().split(/\n\s*\n+/);
-    blocks = blocks.map(block => block.split("\n").map(l => l.trim()).filter(Boolean)).filter(b => b.length >= 7);
-
-    // Ordenar cronológicamente, pero después insertaremos al inicio para invertir
-    blocks.sort((a, b) => {
-        const dateA = a[2].match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/)?.[1];
-        const dateB = b[2].match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/)?.[1];
-        return new Date(dateA.split("/").reverse().join("-")) - new Date(dateB.split("/").reverse().join("-"));
-    });
-
     let processed = 0;
+
     blocks.forEach(block => {
-        input.value = block.join("\n");
-        convertir();
+        let lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+        if (lines.length < 7) return;
+
+        let id = lines[1] || "";
+        let mainLine = lines[2] || "";
+        let cadLine = lines[3] || "";
+        let barrio = lines[4] || "";
+        let coordLine = lines[6] || "";
+
+        const dtMatch = mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
+        if (!dtMatch) return;
+        let dateTime = dtMatch[1];
+        const parts = mainLine.split("\t");
+        let address = parts[1] || "";
+        let zona = parts[2] || "";
+        let rounds = parts[3] || "";
+        let lat = "", lon = "";
+        const coords = coordLine.split("\t");
+        if (coords.length === 2) {
+            lat = coords[0].replace(",", ".");
+            lon = coords[1].replace(",", ".");
+        }
+        let cad = cadLine.match(/\d+/)?.[0] || "";
+        if (!id || !dateTime || !lat || !lon) return;
+
+        const result = [id, dateTime, "", zona, address, rounds, barrio, lat, lon, "", "", cad].join("\t");
+
+        // Avoid duplicates
+        if ([...document.querySelectorAll(".log-entry .log-content")].some(e => e.textContent === result)) return;
+
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        entry.innerHTML = `<span class="log-content">${result}</span>`;
+        log.appendChild(entry);
         processed++;
     });
 
     input.value = "";
+    updateCounter();
     if (processed > 0) showWarning(`✔ ${processed} eventos procesados`);
 }
 
-function convertir() {
-    const lines = input.value.split("\n");
-    let id = lines[1] || "";
-    let mainLine = lines[2] || "";
-    let cadLine = lines[3] || "";
-    let barrio = lines[4] || "";
-    let coordLine = lines[6] || "";
-    let dateTime = "";
-    const dt = mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
-    if (dt) dateTime = dt[1];
-    const parts = mainLine.split("\t");
-    let address = parts[1] || "";
-    let zona = parts[2] || "";
-    let rounds = parts[3] || "";
-    let lat = "", lon = "";
-    const coords = coordLine.split("\t");
-    if (coords.length === 2) {
-        lat = coords[0].replace(",", ".");
-        lon = coords[1].replace(",", ".");
-    }
-    let cad = cadLine.match(/\d+/)?.[0] || "";
-    if (!id || !dateTime || !lat || !lon) return;
-    const resultArray = [
-        id, dateTime, "", zona, address, rounds, barrio, lat, lon, "", "", cad
-    ];
-    const result = resultArray.join("\t");
-    if ([...document.querySelectorAll(".log-entry .log-content")].some(e => e.textContent === result)) return;
-    const entry = document.createElement("div");
-    entry.className = "log-entry";
-    entry.innerHTML = `<span class="log-content">${result}</span>`;
-
-    // Insertar al inicio para que los más recientes queden arriba
-    log.insertBefore(entry, log.firstChild);
-    updateCounter();
+// New function: reverse log order
+function revertLog() {
+    const entries = [...log.querySelectorAll(".log-entry")];
+    entries.reverse().forEach(entry => log.appendChild(entry));
 }
 
 function updateCounter() {
