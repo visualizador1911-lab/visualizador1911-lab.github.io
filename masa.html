@@ -9,19 +9,64 @@ html, body, * { cursor: url("./CURSOR.cur"), auto; }
 
 body {
     background-color: #3E1F1F;
+    background-image: 
+        repeating-linear-gradient(
+            45deg,
+            #4B2B2B 0px,
+            #4B2B2B 40px,
+            #6B1F1F 40px,
+            #6B1F1F 80px
+        ),
+        repeating-linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.05) 0,
+            rgba(255, 255, 255, 0.05) 40px,
+            transparent 40px,
+            transparent 80px
+        );
+    background-size: 80px 80px;
+    background-repeat: repeat;
     color: #E0CFCF;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px;
+    margin: 0;
+    padding: 20px;
 }
 
 h2 {
-    color: #B22222;
+    font-size: 3.5em;
     text-align: center;
-    font-size: 2em;
+    font-weight: bold;
+    background: linear-gradient(45deg, #8B0000, #B22222, #FF4C4C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 2px black;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3),
+                 -1px -1px 1px rgba(0,0,0,0.2);
+    animation: pulseEmboss 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulseEmboss {
+    0% {
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.3),
+                     -1px -1px 1px rgba(0,0,0,0.2);
+        opacity: 0.9;
+    }
+    50% {
+        text-shadow: 2px 2px 2px rgba(0,0,0,0.4),
+                     -2px -2px 2px rgba(0,0,0,0.3);
+        opacity: 1;
+    }
+    100% {
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.3),
+                     -1px -1px 1px rgba(0,0,0,0.2);
+        opacity: 0.95;
+    }
 }
 
 textarea {
-    width: 100%;
+    width: calc(100% - 40px);
+    max-width: 100%;
+    min-width: 300px;
     background: linear-gradient(145deg, #4B2B2B, #6B1F1F);
     color: #F5E5E5;
     border: 2px solid #8B0000;
@@ -29,6 +74,15 @@ textarea {
     font-family: monospace;
     font-size: 14px;
     resize: vertical;
+    box-sizing: border-box;
+    transition: width 0.3s ease;
+}
+
+/* Placeholder bold and larger */
+textarea::placeholder {
+    font-weight: bold;
+    font-size: 21px;
+    color: #F5E5E5;
 }
 
 button {
@@ -45,11 +99,17 @@ button {
 
 button:hover { background-color: #B22222; }
 
+#counter-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0;
+}
+
 #counter {
     font-size: 1.5em;
     font-weight: bold;
     color: #CD5C5C;
-    margin: 10px 0;
 }
 
 #log {
@@ -66,7 +126,6 @@ button:hover { background-color: #B22222; }
 .log-entry { border-bottom: 1px solid #8B0000; padding: 4px; }
 .log-content { user-select: text; display: inline-block; }
 
-/* Animation effect */
 @keyframes scrambleFade {
     0% { opacity: 0.2; }
     100% { opacity: 1; }
@@ -96,12 +155,16 @@ button:hover { background-color: #B22222; }
 
 <h2>FORMATEAR TEXTO SHOTSPOTTER POR MAYOR</h2>
 
-<textarea id="input" rows="12" placeholder="Pegar acá los eventos"></textarea><br>
+<textarea id="input" rows="12" placeholder="LUEGO DE REALIZADO EL FILTRO EN SHOTSPOTTER PRESIONAR CTRL+A, CTRL+C Y PEGAR AQUI EL RESULTADO"></textarea><br>
 
 <button onclick="limpiarTodo()">Limpiar</button>
 <button onclick="revertLog()">Invertir Orden Cronológico</button>
 
-<div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
+<div id="counter-container">
+    <div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
+    <button onclick="copiarTodo()">Copiar todos los eventos</button>
+</div>
+
 <div id="log"></div>
 <div id="warning"></div>
 
@@ -119,7 +182,6 @@ function showWarning(msg) {
     setTimeout(() => w.classList.remove("show"), 2500);
 }
 
-// Parse date from log string
 function parseDateFromLog(text) {
     const parts = text.split("\t");
     if (!parts[1]) return null;
@@ -131,7 +193,6 @@ function parseDateFromLog(text) {
     return new Date(y, m - 1, d, hh, mm, ss);
 }
 
-// Auto chronological check
 function autoCheckChronologicalOrder() {
     const entries = [...document.querySelectorAll(".log-entry .log-content")];
     if (entries.length < 2) return;
@@ -145,7 +206,6 @@ function autoCheckChronologicalOrder() {
     }
 }
 
-// Animate text scramble effect with callback
 function animateTextScramble(element, finalText, speed = 20, callback) {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]<>?";
     let iteration = 0;
@@ -158,12 +218,11 @@ function animateTextScramble(element, finalText, speed = 20, callback) {
         iteration++;
         if (iteration > finalText.length) {
             clearInterval(interval);
-            if (callback) callback(); // Run chronological check after animation
+            if (callback) callback();
         }
     }, speed);
 }
 
-// Main processing function
 function processInput() {
     if (!input.value.trim()) return;
 
@@ -199,7 +258,6 @@ function processInput() {
 
         let cad = cadLine.match(/\d+/)?.[0] || "";
 
-        // Multilingual TIPO field
         let tipo = "";
         const firstLineNorm = firstLine.trim().toLowerCase();
 
@@ -232,7 +290,6 @@ function processInput() {
 
         if ([...document.querySelectorAll(".log-entry .log-content")].some(e => e.textContent === result)) return;
 
-        // Create log entry with animation
         const entry = document.createElement("div");
         entry.className = "log-entry";
         const span = document.createElement("span");
@@ -240,9 +297,7 @@ function processInput() {
         entry.appendChild(span);
         log.appendChild(entry);
 
-        // Animate and check chronological order after animation finishes
         animateTextScramble(span, result, 10, autoCheckChronologicalOrder);
-
         processed++;
     });
 
@@ -252,24 +307,38 @@ function processInput() {
     if (processed > 0) showWarning(`✔ ${processed} eventos procesados`);
 }
 
-// Reverse log order
 function revertLog() {
     const entries = [...log.querySelectorAll(".log-entry")];
     entries.reverse().forEach(e => log.appendChild(e));
 }
 
-// Update counter
 function updateCounter() {
     counter.textContent =
         "CANTIDAD DE EVENTOS CARGADOS: " +
         document.querySelectorAll(".log-entry").length;
 }
 
-// Clear everything
 function limpiarTodo() {
     input.value = "";
     log.innerHTML = "";
     updateCounter();
+}
+
+function copiarTodo() {
+    if (!log.textContent.trim()) {
+        showWarning("⚠ No hay eventos para copiar");
+        return;
+    }
+
+    const text = Array.from(log.querySelectorAll(".log-content"))
+                      .map(e => e.textContent)
+                      .join("\n");
+
+    navigator.clipboard.writeText(text).then(() => {
+        showWarning("✔ Todos los eventos copiados al portapapeles");
+    }).catch(() => {
+        showWarning("⚠ Error al copiar al portapapeles");
+    });
 }
 </script>
 
