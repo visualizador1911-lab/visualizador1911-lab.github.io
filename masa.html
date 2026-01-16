@@ -169,15 +169,17 @@ function processInput() {
 
         let cad = cadLine.match(/\d+/)?.[0] || "";
 
-        // === NEW LOGIC ===
+        // === MULTILINGUAL TIPO FIELD ===
         let tipo = "";
-        if (firstLine === "Único-disparo") {
+        const firstLineNorm = firstLine.trim().toLowerCase();
+
+        if (firstLineNorm === "único-disparo" || firstLineNorm === "single gunshot") {
             tipo = "UNICO-DISPARO";
-        } else if (firstLine === "Multiple-disparo") {
+        } else if (firstLineNorm === "multiple-disparo" || firstLineNorm === "multiple gunshots") {
             tipo = "MULTIPLE-DISPARO";
-        } else if (firstLine === "Probable-disparo") {
+        } else if (firstLineNorm === "probable-disparo" || firstLineNorm === "probable gunfire") {
             tipo = (rounds === "1") ? "UNICO-DISPARO" : "MULTIPLE-DISPARO";
-        } else if (firstLine === "No hay tiroteo") {
+        } else if (firstLineNorm === "no hay tiroteo" || firstLineNorm === "not gunfire") {
             tipo = "NO HAY TIROTEO";
         }
 
