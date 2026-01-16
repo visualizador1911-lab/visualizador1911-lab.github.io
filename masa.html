@@ -3,21 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <title>FORMATEAR TEXTO SHOTSPOTTER POR MAYOR</title>
+
 <style>
 html, body, * { cursor: url("./CURSOR.cur"), auto; }
+
 body {
-    background-color: #3E1F1F; 
-    color: #E0CFCF; 
+    background-color: #3E1F1F;
+    color: #E0CFCF;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 20px;
 }
-h2 { color: #B22222; text-align: center; font-size: 2em; }
+
+h2 {
+    color: #B22222;
+    text-align: center;
+    font-size: 2em;
+}
 
 textarea {
     width: 100%;
     background: linear-gradient(145deg, #4B2B2B, #6B1F1F);
-    color: #F5E5E5; 
-    border: 2px solid #8B0000; 
+    color: #F5E5E5;
+    border: 2px solid #8B0000;
     padding: 10px;
     font-family: monospace;
     font-size: 14px;
@@ -25,8 +32,8 @@ textarea {
 }
 
 button {
-    background-color: #8B0000; 
-    color: #F5E5E5; 
+    background-color: #8B0000;
+    color: #F5E5E5;
     border: none;
     padding: 10px 20px;
     margin: 5px 5px 15px 0;
@@ -55,8 +62,15 @@ button:hover { background-color: #B22222; }
     font-family: monospace;
     white-space: pre;
 }
-.log-entry { border-bottom: 1px solid #8B0000; padding: 4px; }
-.log-content { user-select: text; }
+
+.log-entry {
+    border-bottom: 1px solid #8B0000;
+    padding: 4px;
+}
+
+.log-content {
+    user-select: text;
+}
 
 #warning {
     position: fixed;
@@ -70,9 +84,11 @@ button:hover { background-color: #B22222; }
     opacity: 0;
     transition: opacity .4s;
 }
+
 #warning.show { opacity: 1; }
 </style>
 </head>
+
 <body>
 
 <h2>FORMATEAR TEXTO SHOTSPOTTER POR MAYOR</h2>
@@ -91,13 +107,41 @@ const input = document.getElementById("input");
 const log = document.getElementById("log");
 const counter = document.getElementById("counter");
 
-input.addEventListener("paste", () => { setTimeout(processInput, 0); });
+input.addEventListener("paste", () => {
+    setTimeout(processInput, 0);
+});
 
 function showWarning(msg) {
     const w = document.getElementById("warning");
     w.textContent = msg;
     w.classList.add("show");
     setTimeout(() => w.classList.remove("show"), 2500);
+}
+
+function parseDateFromLog(text) {
+    const parts = text.split("\t");
+    if (!parts[1]) return null;
+
+    const [date, time] = parts[1].split(" ");
+    const [d, m, y] = date.split("/").map(Number);
+    const [hh, mm, ss] = time.split(":").map(Number);
+
+    return new Date(y, m - 1, d, hh, mm, ss);
+}
+
+function autoCheckChronologicalOrder() {
+    const entries = [...document.querySelectorAll(".log-entry .log-content")];
+    if (entries.length < 2) return;
+
+    const topDate = parseDateFromLog(entries[0].textContent);
+    const bottomDate = parseDateFromLog(entries[entries.length - 1].textContent);
+
+    if (!topDate || !bottomDate) return;
+
+    if (topDate > bottomDate) {
+        revertLog();
+        showWarning("↕ Orden cronológico corregido automáticamente");
+    }
 }
 
 function processInput() {
@@ -118,24 +162,41 @@ function processInput() {
 
         const dtMatch = mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
         if (!dtMatch) return;
+
         let dateTime = dtMatch[1];
         const parts = mainLine.split("\t");
         let address = parts[1] || "";
         let zona = parts[2] || "";
         let rounds = parts[3] || "";
+
         let lat = "", lon = "";
         const coords = coordLine.split("\t");
         if (coords.length === 2) {
             lat = coords[0].replace(",", ".");
             lon = coords[1].replace(",", ".");
         }
+
         let cad = cadLine.match(/\d+/)?.[0] || "";
+
         if (!id || !dateTime || !lat || !lon) return;
 
-        const result = [id, dateTime, "", zona, address, rounds, barrio, lat, lon, "", "", cad].join("\t");
+        const result = [
+            id,
+            dateTime,
+            "",
+            zona,
+            address,
+            rounds,
+            barrio,
+            lat,
+            lon,
+            "",
+            "",
+            cad
+        ].join("\t");
 
-        // Avoid duplicates
-        if ([...document.querySelectorAll(".log-entry .log-content")].some(e => e.textContent === result)) return;
+        if ([...document.querySelectorAll(".log-entry .log-content")]
+            .some(e => e.textContent === result)) return;
 
         const entry = document.createElement("div");
         entry.className = "log-entry";
@@ -146,13 +207,16 @@ function processInput() {
 
     input.value = "";
     updateCounter();
-    if (processed > 0) showWarning(`✔ ${processed} eventos procesados`);
+    autoCheckChronologicalOrder();
+
+    if (processed > 0) {
+        showWarning(`✔ ${processed} eventos procesados`);
+    }
 }
 
-// New function: reverse log order
 function revertLog() {
     const entries = [...log.querySelectorAll(".log-entry")];
-    entries.reverse().forEach(entry => log.appendChild(entry));
+    entries.reverse().forEach(e => log.appendChild(e));
 }
 
 function updateCounter() {
