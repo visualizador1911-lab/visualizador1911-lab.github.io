@@ -64,7 +64,16 @@ button:hover { background-color: #B22222; }
 }
 
 .log-entry { border-bottom: 1px solid #8B0000; padding: 4px; }
-.log-content { user-select: text; }
+.log-content { user-select: text; display: inline-block; }
+
+/* Animation effect */
+@keyframes scrambleFade {
+    0% { opacity: 0.2; }
+    100% { opacity: 1; }
+}
+.log-entry span {
+    animation: scrambleFade 0.3s ease-in-out;
+}
 
 #warning {
     position: fixed;
@@ -110,6 +119,7 @@ function showWarning(msg) {
     setTimeout(() => w.classList.remove("show"), 2500);
 }
 
+// Parse date from log string
 function parseDateFromLog(text) {
     const parts = text.split("\t");
     if (!parts[1]) return null;
@@ -121,6 +131,7 @@ function parseDateFromLog(text) {
     return new Date(y, m - 1, d, hh, mm, ss);
 }
 
+// Auto chronological check
 function autoCheckChronologicalOrder() {
     const entries = [...document.querySelectorAll(".log-entry .log-content")];
     if (entries.length < 2) return;
@@ -134,6 +145,25 @@ function autoCheckChronologicalOrder() {
     }
 }
 
+// Animate text scramble effect with callback
+function animateTextScramble(element, finalText, speed = 20, callback) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]<>?";
+    let iteration = 0;
+    const interval = setInterval(() => {
+        let scrambled = "";
+        for (let i = 0; i < finalText.length; i++) {
+            scrambled += (i < iteration) ? finalText[i] : chars[Math.floor(Math.random() * chars.length)];
+        }
+        element.textContent = scrambled;
+        iteration++;
+        if (iteration > finalText.length) {
+            clearInterval(interval);
+            if (callback) callback(); // Run chronological check after animation
+        }
+    }, speed);
+}
+
+// Main processing function
 function processInput() {
     if (!input.value.trim()) return;
 
@@ -144,7 +174,7 @@ function processInput() {
         let lines = block.split("\n").map(l => l.trim()).filter(Boolean);
         if (lines.length < 7) return;
 
-        const firstLine = lines[0]; // event type
+        const firstLine = lines[0];
         let id = lines[1] || "";
         let mainLine = lines[2] || "";
         let cadLine = lines[3] || "";
@@ -169,7 +199,7 @@ function processInput() {
 
         let cad = cadLine.match(/\d+/)?.[0] || "";
 
-        // === MULTILINGUAL TIPO FIELD ===
+        // Multilingual TIPO field
         let tipo = "";
         const firstLineNorm = firstLine.trim().toLowerCase();
 
@@ -200,34 +230,42 @@ function processInput() {
             cad
         ].join("\t");
 
-        if ([...document.querySelectorAll(".log-entry .log-content")]
-            .some(e => e.textContent === result)) return;
+        if ([...document.querySelectorAll(".log-entry .log-content")].some(e => e.textContent === result)) return;
 
+        // Create log entry with animation
         const entry = document.createElement("div");
         entry.className = "log-entry";
-        entry.innerHTML = `<span class="log-content">${result}</span>`;
+        const span = document.createElement("span");
+        span.className = "log-content";
+        entry.appendChild(span);
         log.appendChild(entry);
+
+        // Animate and check chronological order after animation finishes
+        animateTextScramble(span, result, 10, autoCheckChronologicalOrder);
+
         processed++;
     });
 
     input.value = "";
     updateCounter();
-    autoCheckChronologicalOrder();
 
     if (processed > 0) showWarning(`✔ ${processed} eventos procesados`);
 }
 
+// Reverse log order
 function revertLog() {
     const entries = [...log.querySelectorAll(".log-entry")];
     entries.reverse().forEach(e => log.appendChild(e));
 }
 
+// Update counter
 function updateCounter() {
     counter.textContent =
         "CANTIDAD DE EVENTOS CARGADOS: " +
         document.querySelectorAll(".log-entry").length;
 }
 
+// Clear everything
 function limpiarTodo() {
     input.value = "";
     log.innerHTML = "";
