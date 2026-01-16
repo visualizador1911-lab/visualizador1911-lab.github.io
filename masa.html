@@ -63,14 +63,8 @@ button:hover { background-color: #B22222; }
     white-space: pre;
 }
 
-.log-entry {
-    border-bottom: 1px solid #8B0000;
-    padding: 4px;
-}
-
-.log-content {
-    user-select: text;
-}
+.log-entry { border-bottom: 1px solid #8B0000; padding: 4px; }
+.log-content { user-select: text; }
 
 #warning {
     position: fixed;
@@ -107,9 +101,7 @@ const input = document.getElementById("input");
 const log = document.getElementById("log");
 const counter = document.getElementById("counter");
 
-input.addEventListener("paste", () => {
-    setTimeout(processInput, 0);
-});
+input.addEventListener("paste", () => setTimeout(processInput, 0));
 
 function showWarning(msg) {
     const w = document.getElementById("warning");
@@ -136,9 +128,7 @@ function autoCheckChronologicalOrder() {
     const topDate = parseDateFromLog(entries[0].textContent);
     const bottomDate = parseDateFromLog(entries[entries.length - 1].textContent);
 
-    if (!topDate || !bottomDate) return;
-
-    if (topDate > bottomDate) {
+    if (topDate && bottomDate && topDate > bottomDate) {
         revertLog();
         showWarning("↕ Orden cronológico corregido automáticamente");
     }
@@ -154,6 +144,7 @@ function processInput() {
         let lines = block.split("\n").map(l => l.trim()).filter(Boolean);
         if (lines.length < 7) return;
 
+        const firstLine = lines[0]; // event type
         let id = lines[1] || "";
         let mainLine = lines[2] || "";
         let cadLine = lines[3] || "";
@@ -178,6 +169,18 @@ function processInput() {
 
         let cad = cadLine.match(/\d+/)?.[0] || "";
 
+        // === NEW LOGIC ===
+        let tipo = "";
+        if (firstLine === "Único-disparo") {
+            tipo = "UNICO-DISPARO";
+        } else if (firstLine === "Multiple-disparo") {
+            tipo = "MULTIPLE-DISPARO";
+        } else if (firstLine === "Probable-disparo") {
+            tipo = (rounds === "1") ? "UNICO-DISPARO" : "MULTIPLE-DISPARO";
+        } else if (firstLine === "No hay tiroteo") {
+            tipo = "NO HAY TIROTEO";
+        }
+
         if (!id || !dateTime || !lat || !lon) return;
 
         const result = [
@@ -191,7 +194,7 @@ function processInput() {
             lat,
             lon,
             "",
-            "",
+            tipo,
             cad
         ].join("\t");
 
@@ -209,9 +212,7 @@ function processInput() {
     updateCounter();
     autoCheckChronologicalOrder();
 
-    if (processed > 0) {
-        showWarning(`✔ ${processed} eventos procesados`);
-    }
+    if (processed > 0) showWarning(`✔ ${processed} eventos procesados`);
 }
 
 function revertLog() {
