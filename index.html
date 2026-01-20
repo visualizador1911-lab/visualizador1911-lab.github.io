@@ -80,6 +80,11 @@ button:hover { background-color: #B22222; }
     font-weight: bold;
     color: #CD5C5C;
 }
+#breakdown {
+    font-size: 0.85em;
+    margin-top: 4px;
+    color: #F5E5E5;
+}
 #log {
     margin-top: 10px;
     max-height: 400px;
@@ -126,7 +131,15 @@ button:hover { background-color: #B22222; }
 <button onclick="limpiarTodo()">Limpiar</button>
 <button onclick="revertLog()">Invertir Orden Cronológico</button>
 <div id="counter-container">
-    <div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
+    <div>
+        <div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
+        <div id="breakdown">
+            <span id="falsos">Falsos Positivos: 0</span> | 
+            <span id="unicos">Eventos Disparo Único: 0</span> | 
+            <span id="multiple">Eventos Multiple Disparo: 0</span>
+		<span id="nota">(Solo desglosa los Eventos cargados al por mayor, no cuenta individuales)</span>
+        </div>
+    </div>
     <button onclick="copiarTodo()">Copiar todos los eventos</button>
 </div>
 <div id="log"></div>
@@ -143,6 +156,7 @@ function showWarning(msg){
     w.classList.add("show");
     setTimeout(()=>w.classList.remove("show"),2500);
 }
+
 function parseDateFromLog(text){
     const parts=text.split("\t");
     if(!parts[1])return null;
@@ -151,9 +165,11 @@ function parseDateFromLog(text){
     const [hh,mm,ss]=time.split(":").map(Number);
     return new Date(y,m-1,d,hh,mm,ss);
 }
+
 function isDuplicateById(id){
     return [...document.querySelectorAll(".log-entry .log-content")].some(e=>e.textContent.split("\t")[0]===id);
 }
+
 function animateTextScramble(element,finalText,speed=20,callback){
     const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]<>?";
     let iteration=0;
@@ -170,6 +186,7 @@ function animateTextScramble(element,finalText,speed=20,callback){
         }
     },speed);
 }
+
 function sortLogChronologically(){
     const entries=[...log.querySelectorAll(".log-entry")];
     entries.sort((a,b)=>{
@@ -184,6 +201,7 @@ function sortLogChronologically(){
         if(bottomDate<topDate)revertLog();
     }
 }
+
 function selectLogText(){
     const range=document.createRange();
     range.selectNodeContents(log);
@@ -191,7 +209,9 @@ function selectLogText(){
     sel.removeAllRanges();
     sel.addRange(range);
 }
+
 input.addEventListener("paste",()=>setTimeout(processInput,0));
+
 function processInput(){
     if(!input.value.trim())return;
     let blocks=input.value.replace(/\r\n/g,"\n").trim().split(/\n\s*\n+/);
@@ -233,12 +253,15 @@ function processInput(){
         animateTextScramble(span,result,10,()=>{
             sortLogChronologically();
             updateCounter();
+            updateBreakdown();
             selectLogText();
         });
     });
     input.value="";
 }
+
 singleInput.addEventListener("paste",function(){singleInput.value="";setTimeout(()=>{convertirSingle();},0);});
+
 function convertirSingle(){
     if(!singleInput.value.trim())return;
     let lines=singleInput.value.split("\n").map(l=>l.trim());
@@ -278,24 +301,55 @@ function convertirSingle(){
     animateTextScramble(span,result,10,()=>{
         sortLogChronologically();
         updateCounter();
+        updateBreakdown();
         selectLogText();
         showWarning("✔ Evento único agregado");
     });
     singleInput.value="";
 }
+
 function revertLog(){
     const entries=[...log.querySelectorAll(".log-entry")];
     entries.reverse().forEach(e=>log.appendChild(e));
 }
+
 function updateCounter(){
     counter.textContent="CANTIDAD DE EVENTOS CARGADOS: "+document.querySelectorAll(".log-entry").length;
 }
+
+function updateBreakdown() {
+    const entries = document.querySelectorAll(".log-entry .log-content");
+    let falsos = 0, unico = 0, multiple = 0;
+
+    entries.forEach(e => {
+        const tipo = e.textContent.split("\t")[10];
+        if (tipo === "NO HAY TIROTEO") falsos++;
+        else if (tipo === "UNICO-DISPARO") unico++;
+        else if (tipo === "MULTIPLE-DISPARO") multiple++;
+    });
+
+    const falsosSpan = document.getElementById("falsos");
+    const unicosSpan = document.getElementById("unicos");
+    const multipleSpan = document.getElementById("multiple");
+
+    falsosSpan.textContent = `Falsos Positivos: ${falsos}`;
+    falsosSpan.style.color = "gray";
+
+    unicosSpan.textContent = `Eventos Disparo Único: ${unico}`;
+    unicosSpan.style.color = "orange";
+
+    multipleSpan.textContent = `Eventos Multiple Disparo: ${multiple}`;
+    multipleSpan.style.color = "red";
+}
+
 function limpiarTodo(){
     input.value="";
     singleInput.value="";
     log.innerHTML="";
     updateCounter();
+    updateBreakdown();
 }
+
 function copiarTodo(){
     if(!log.textContent.trim()){showWarning("⚠ No hay eventos para copiar");return;}
     const text=Array.from(log.querySelectorAll(".log-content")).map(e=>e.textContent).join("\n");
