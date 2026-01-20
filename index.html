@@ -3,27 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>FORMATEAR TEXTO SHOTSPOTTER</title>
-
 <style>
 html, body, * { cursor: url("./CURSOR.cur"), auto; }
-
 body {
     background-color: #3E1F1F;
     background-image: 
-        repeating-linear-gradient(
-            45deg,
-            #4B2B2B 0px,
-            #4B2B2B 40px,
-            #6B1F1F 40px,
-            #6B1F1F 80px
-        ),
-        repeating-linear-gradient(
-            45deg,
-            rgba(255, 255, 255, 0.05) 0,
-            rgba(255, 255, 255, 0.05) 40px,
-            transparent 40px,
-            transparent 80px
-        );
+        repeating-linear-gradient(45deg, #4B2B2B 0px, #4B2B2B 40px, #6B1F1F 40px, #6B1F1F 80px),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0, rgba(255, 255, 255, 0.05) 40px, transparent 40px, transparent 80px);
     background-size: 80px 80px;
     background-repeat: repeat;
     color: #E0CFCF;
@@ -31,7 +17,6 @@ body {
     margin: 0;
     padding: 20px;
 }
-
 h2 {
     font-size: 3.5em;
     text-align: center;
@@ -40,29 +25,19 @@ h2 {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     -webkit-text-stroke: 2px black;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.3),
-                 -1px -1px 1px rgba(0,0,0,0.2);
-    animation: pulseEmboss 2s infinite alternate ease-in-out;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3), -1px -1px 1px rgba(0,0,0,0.2);
 }
-
-@keyframes pulseEmboss {
-    0% {
-        text-shadow: 1px 1px 1px rgba(0,0,0,0.3),
-                     -1px -1px 1px rgba(0,0,0,0.2);
-        opacity: 0.9;
-    }
-    50% {
-        text-shadow: 2px 2px 2px rgba(0,0,0,0.4),
-                     -2px -2px 2px rgba(0,0,0,0.3);
-        opacity: 1;
-    }
-    100% {
-        text-shadow: 1px 1px 1px rgba(0,0,0,0.3),
-                     -1px -1px 1px rgba(0,0,0,0.2);
-        opacity: 0.95;
-    }
+.float-letter {
+    display: inline-block;
+    animation: floatLetter 2s ease-in-out infinite;
 }
-
+@keyframes floatLetter {
+    0% { transform: translateY(0px) rotate(0deg) skew(0deg, 0deg); }
+    25% { transform: translateY(-4px) rotate(-2deg) skew(-1deg, 1deg); }
+    50% { transform: translateY(-6px) rotate(2deg) skew(1deg, -1deg); }
+    75% { transform: translateY(-4px) rotate(-1deg) skew(0.5deg, 0.5deg); }
+    100% { transform: translateY(0px) rotate(0deg) skew(0deg, 0deg); }
+}
 textarea {
     width: 100%;
     max-width: 100%;
@@ -77,13 +52,11 @@ textarea {
     box-sizing: border-box;
     transition: width 0.3s ease;
 }
-
 textarea::placeholder {
     font-weight: bold;
     font-size: 16px;
     color: #F5E5E5;
 }
-
 button {
     background-color: #8B0000;
     color: #F5E5E5;
@@ -95,22 +68,18 @@ button {
     border-radius: 12px;
     transition: 0.2s;
 }
-
 button:hover { background-color: #B22222; }
-
 #counter-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin: 10px 0;
 }
-
 #counter {
     font-size: 1.5em;
     font-weight: bold;
     color: #CD5C5C;
 }
-
 #log {
     margin-top: 10px;
     max-height: 400px;
@@ -121,18 +90,9 @@ button:hover { background-color: #B22222; }
     font-family: monospace;
     white-space: pre;
 }
-
 .log-entry { border-bottom: 1px solid #8B0000; padding: 4px; }
+.log-entry.single-event .log-content { color: #A9A9A9 !important; opacity: 0.8; }
 .log-content { user-select: text; display: inline-block; }
-
-@keyframes scrambleFade {
-    0% { opacity: 0.2; }
-    100% { opacity: 1; }
-}
-.log-entry span {
-    animation: scrambleFade 0.3s ease-in-out;
-}
-
 #warning {
     position: fixed;
     top: 20px;
@@ -145,281 +105,225 @@ button:hover { background-color: #B22222; }
     opacity: 0;
     transition: opacity .4s;
 }
-
 #warning.show { opacity: 1; }
-
 #textarea-container {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
 }
-
 #textarea-container textarea {
     flex: 1 1 400px;
 }
 </style>
 </head>
-
 <body>
-
 <h2>FORMATEAR TEXTO SHOTSPOTTER</h2>
-
 <div id="textarea-container">
     <textarea id="input" rows="12" placeholder="LUEGO DE REALIZADO EL FILTRO EN SHOTSPOTTER PRESIONAR CTRL+A, CTRL+C Y PEGAR AQUI EL RESULTADO"></textarea>
     <textarea id="singleInput" rows="12" placeholder="PEGAR AQUÍ DE A UN EVENTO"></textarea>
 </div>
-
 <br>
-
 <button onclick="limpiarTodo()">Limpiar</button>
 <button onclick="revertLog()">Invertir Orden Cronológico</button>
-
 <div id="counter-container">
     <div id="counter">CANTIDAD DE EVENTOS CARGADOS: 0</div>
     <button onclick="copiarTodo()">Copiar todos los eventos</button>
 </div>
-
 <div id="log"></div>
 <div id="warning"></div>
-
 <script>
 const input = document.getElementById("input");
 const singleInput = document.getElementById("singleInput");
 const log = document.getElementById("log");
 const counter = document.getElementById("counter");
 
-// --- HELPER FUNCTIONS ---
-function showWarning(msg) {
-    const w = document.getElementById("warning");
-    w.textContent = msg;
+function showWarning(msg){
+    const w=document.getElementById("warning");
+    w.textContent=msg;
     w.classList.add("show");
-    setTimeout(() => w.classList.remove("show"), 2500);
+    setTimeout(()=>w.classList.remove("show"),2500);
 }
-
-function parseDateFromLog(text) {
-    const parts = text.split("\t");
-    if (!parts[1]) return null;
-    const [date, time] = parts[1].split(" ");
-    const [d, m, y] = date.split("/").map(Number);
-    const [hh, mm, ss] = time.split(":").map(Number);
-    return new Date(y, m - 1, d, hh, mm, ss);
+function parseDateFromLog(text){
+    const parts=text.split("\t");
+    if(!parts[1])return null;
+    const [date,time]=parts[1].split(" ");
+    const [d,m,y]=date.split("/").map(Number);
+    const [hh,mm,ss]=time.split(":").map(Number);
+    return new Date(y,m-1,d,hh,mm,ss);
 }
-
-function isDuplicateById(id) {
-    return [...document.querySelectorAll(".log-entry .log-content")]
-        .some(e => e.textContent.split("\t")[0] === id);
+function isDuplicateById(id){
+    return [...document.querySelectorAll(".log-entry .log-content")].some(e=>e.textContent.split("\t")[0]===id);
 }
-
-function animateTextScramble(element, finalText, speed = 20, callback) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]<>?";
-    let iteration = 0;
-    const interval = setInterval(() => {
-        let scrambled = "";
-        for (let i = 0; i < finalText.length; i++) {
-            scrambled += (i < iteration) ? finalText[i] : chars[Math.floor(Math.random() * chars.length)];
+function animateTextScramble(element,finalText,speed=20,callback){
+    const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-={}[]<>?";
+    let iteration=0;
+    const interval=setInterval(()=>{
+        let scrambled="";
+        for(let i=0;i<finalText.length;i++){
+            scrambled+=i<iteration?finalText[i]:chars[Math.floor(Math.random()*chars.length)];
         }
-        element.textContent = scrambled;
+        element.textContent=scrambled;
         iteration++;
-        if (iteration > finalText.length) {
+        if(iteration>finalText.length){
             clearInterval(interval);
-            if (callback) callback();
+            if(callback)callback();
         }
-    }, speed);
+    },speed);
 }
-
-// --- LOG SORTING ---
-function sortLogChronologically() {
-    const entries = [...log.querySelectorAll(".log-entry")];
-    entries.sort((a, b) => {
-        const dateA = parseDateFromLog(a.querySelector(".log-content").textContent);
-        const dateB = parseDateFromLog(b.querySelector(".log-content").textContent);
-        return dateA - dateB;
+function sortLogChronologically(){
+    const entries=[...log.querySelectorAll(".log-entry")];
+    entries.sort((a,b)=>{
+        const dateA=parseDateFromLog(a.querySelector(".log-content").textContent);
+        const dateB=parseDateFromLog(b.querySelector(".log-content").textContent);
+        return dateA-dateB;
     });
-    entries.forEach(e => log.appendChild(e));
-
-    // Invert if bottom is older than top
-    if (entries.length > 1) {
-        const topDate = parseDateFromLog(entries[0].querySelector(".log-content").textContent);
-        const bottomDate = parseDateFromLog(entries[entries.length - 1].querySelector(".log-content").textContent);
-        if (bottomDate < topDate) revertLog();
+    entries.forEach(e=>log.appendChild(e));
+    if(entries.length>1){
+        const topDate=parseDateFromLog(entries[0].querySelector(".log-content").textContent);
+        const bottomDate=parseDateFromLog(entries[entries.length-1].querySelector(".log-content").textContent);
+        if(bottomDate<topDate)revertLog();
     }
 }
-
-// --- BULK PROCESSING ---
-input.addEventListener("paste", () => setTimeout(processInput, 0));
-
-function processInput() {
-    if (!input.value.trim()) return;
-
-    let blocks = input.value.replace(/\r\n/g, "\n").trim().split(/\n\s*\n+/);
-    let processed = 0;
-
-    blocks.forEach(block => {
-        let lines = block.split("\n").map(l => l.trim()).filter(Boolean);
-        if (lines.length < 7) return;
-
-        const firstLine = lines[0];
-        let id = lines[1] || "";
-        let mainLine = lines[2] || "";
-        let cadLine = lines[3] || "";
-        let barrio = lines[4] || "";
-        let coordLine = lines[6] || "";
-
-        const dtMatch = mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
-        if (!dtMatch) return;
-
-        let dateTime = dtMatch[1];
-        const parts = mainLine.split("\t");
-        let address = parts[1] || "";
-        let zona = parts[2] || "";
-        let rounds = parts[3] || "";
-
-        let lat = "", lon = "";
-        const coords = coordLine.split("\t");
-        if (coords.length === 2) {
-            lat = coords[0].replace(",", ".");
-            lon = coords[1].replace(",", ".");
-        }
-
-        let cad = cadLine.match(/\d+/)?.[0] || "";
-
-        let tipo = "";
-        const firstLineNorm = firstLine.trim().toLowerCase();
-        if (firstLineNorm === "único-disparo" || firstLineNorm === "single gunshot") tipo = "UNICO-DISPARO";
-        else if (firstLineNorm === "multiple-disparo" || firstLineNorm === "multiple gunshots") tipo = "MULTIPLE-DISPARO";
-        else if (firstLineNorm === "probable-disparo" || firstLineNorm === "probable gunfire") tipo = (rounds === "1") ? "UNICO-DISPARO" : "MULTIPLE-DISPARO";
-        else if (firstLineNorm === "no hay tiroteo" || firstLineNorm === "not gunfire") tipo = "NO HAY TIROTEO";
-
-        if (!id || !dateTime || !lat || !lon) return;
-        if (isDuplicateById(id)) return;
-
-        const result = [id,dateTime,"",zona,address,rounds,barrio,lat,lon,"",tipo,cad].join("\t");
-
-        const entry = document.createElement("div");
-        entry.className = "log-entry";
-        const span = document.createElement("span");
-        span.className = "log-content";
+function selectLogText(){
+    const range=document.createRange();
+    range.selectNodeContents(log);
+    const sel=window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+input.addEventListener("paste",()=>setTimeout(processInput,0));
+function processInput(){
+    if(!input.value.trim())return;
+    let blocks=input.value.replace(/\r\n/g,"\n").trim().split(/\n\s*\n+/);
+    blocks.forEach(block=>{
+        let lines=block.split("\n").map(l=>l.trim()).filter(Boolean);
+        if(lines.length<7)return;
+        const firstLine=lines[0];
+        let id=lines[1]||"";
+        let mainLine=lines[2]||"";
+        let cadLine=lines[3]||"";
+        let barrio=lines[4]||"";
+        let coordLine=lines[6]||"";
+        const dtMatch=mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
+        if(!dtMatch)return;
+        let dateTime=dtMatch[1];
+        const parts=mainLine.split("\t");
+        let address=parts[1]||"";
+        let zona=parts[2]||"";
+        let rounds=parts[3]||"";
+        let lat="",lon="";
+        const coords=coordLine.split("\t");
+        if(coords.length===2){lat=coords[0].replace(",",".");lon=coords[1].replace(",",".");}
+        let cad=cadLine.match(/\d+/)?.[0]||"";
+        let tipo="";
+        const firstLineNorm=firstLine.trim().toLowerCase();
+        if(firstLineNorm==="único-disparo"||firstLineNorm==="single gunshot")tipo="UNICO-DISPARO";
+        else if(firstLineNorm==="multiple-disparo"||firstLineNorm==="multiple gunshots")tipo="MULTIPLE-DISPARO";
+        else if(firstLineNorm==="probable-disparo"||firstLineNorm==="probable gunfire")tipo=(rounds==="1")?"UNICO-DISPARO":"MULTIPLE-DISPARO";
+        else if(firstLineNorm==="no hay tiroteo"||firstLineNorm==="not gunfire")tipo="NO HAY TIROTEO";
+        if(!id||!dateTime||!lat||!lon)return;
+        if(isDuplicateById(id))return;
+        const result=[id,dateTime,"",zona,address,rounds,barrio,lat,lon,"",tipo,cad].join("\t");
+        const entry=document.createElement("div");
+        entry.className="log-entry";
+        const span=document.createElement("span");
+        span.className="log-content";
         entry.appendChild(span);
         log.appendChild(entry);
-
-        animateTextScramble(span, result, 10, () => {
+        animateTextScramble(span,result,10,()=>{
             sortLogChronologically();
             updateCounter();
+            selectLogText();
         });
-        processed++;
     });
-
-    input.value = "";
+    input.value="";
 }
-
-// --- SINGLE EVENT PROCESSING ---
-singleInput.addEventListener("paste", function() {
-    singleInput.value = "";
-    setTimeout(() => { convertirSingle(); }, 0);
-});
-
-function convertirSingle() {
-    if (!singleInput.value.trim()) return;
-    let lines = singleInput.value.split("\n").map(l => l.trim());
-
-    let line1 = lines[0] || "";
-    let line2 = lines[2] || "";
-    let line3 = lines[3] || "";
-    let line5, line6, line7, sivve = "";
-
-    if (lines.length === 8) {
-        line5 = lines[4] || "";
-        line6 = lines[5] || "";
-        line7 = lines[6] || "";
-    } else if (lines.length === 9) {
-        line5 = lines[5] || "";
-        line6 = lines[6] || "";
-        line7 = lines[7] || "";
-        let lineWithCAD = lines[4] || ""; 
-        const sivveMatch = lineWithCAD.match(/CAD\s*ID\s*(\d{8})/i);
-        sivve = sivveMatch ? sivveMatch[1] : "";
-    }
-
-    let sixthLine = line6;
-
-    let id = (line3.match(/ID\s*([A-Za-z0-9-]+)/i) || [])[1] || "";
-    let dateTime = ((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/) || []).slice(1).join(" ")) || "";
-    let address = (line1.match(/(?:en|at)\s+(.*)/i) || [])[1] || line1;
-    let round = (line1.match(/^(\d+)/) || [])[1] || "";
-
-    let beat = "";
-    let beatSectorMatch = line5.match(/\b(Beat|Sector)\b[:\s]*(.*)$/iu);
-    if (beatSectorMatch) beat = beatSectorMatch[2].trim();
-
-    let lat = "", lon = "";
-    const coordMatch = line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
-    if (coordMatch) { lat = coordMatch[1].replace(/,/g, "."); lon = coordMatch[2].replace(/,/g, "."); }
-
-    let missing = [];
-    if (!id) missing.push("ID");
-    if (!dateTime) missing.push("Fecha/Hora");
-    if (!address) missing.push("Dirección");
-    if (!lat) missing.push("Latitud (X)");
-    if (!lon) missing.push("Longitud (Y)");
-    if (missing.length > 0) { showWarning("❗ Campos faltantes: " + missing.join(", ")); return; }
-
-    if (isDuplicateById(id)) { showWarning("Este evento ya está agregado a la lista"); return; }
-
-    let resultArray = [id,dateTime,"",sixthLine,address,round,beat,lat,lon,"","",sivve || ""];
-    let result = resultArray.join("\t");
-
-    const entry = document.createElement("div");
-    entry.className = "log-entry";
-    const span = document.createElement("span");
-    span.className = "log-content";
+singleInput.addEventListener("paste",function(){singleInput.value="";setTimeout(()=>{convertirSingle();},0);});
+function convertirSingle(){
+    if(!singleInput.value.trim())return;
+    let lines=singleInput.value.split("\n").map(l=>l.trim());
+    let line1=lines[0]||"";
+    let line2=lines[2]||"";
+    let line3=lines[3]||"";
+    let line5,line6,line7,sivve="";
+    if(lines.length===8){line5=lines[4]||"";line6=lines[5]||"";line7=lines[6]||"";}
+    else if(lines.length===9){line5=lines[5]||"";line6=lines[6]||"";line7=lines[7]||"";let lineWithCAD=lines[4]||"";const sivveMatch=lineWithCAD.match(/CAD\s*ID\s*(\d{8})/i);sivve=sivveMatch?sivveMatch[1]:"";}
+    let sixthLine=line6;
+    let id=(line3.match(/ID\s*([A-Za-z0-9-]+)/i)||[])[1]||"";
+    let dateTime=((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/)||[]).slice(1).join(" "))||"";
+    let address=(line1.match(/(?:en|at)\s+(.*)/i)||[])[1]||line1;
+    let round=(line1.match(/^(\d+)/)||[])[1]||"";
+    let beat="";
+    let beatSectorMatch=line5.match(/\b(Beat|Sector)\b[:\s]*(.*)$/iu);
+    if(beatSectorMatch) beat=beatSectorMatch[2].trim();
+    let lat="",lon="";
+    const coordMatch=line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
+    if(coordMatch){lat=coordMatch[1].replace(/,/g,".");lon=coordMatch[2].replace(/,/g,".");}
+    let missing=[];
+    if(!id) missing.push("ID");
+    if(!dateTime) missing.push("Fecha/Hora");
+    if(!address) missing.push("Dirección");
+    if(!lat) missing.push("Latitud (X)");
+    if(!lon) missing.push("Longitud (Y)");
+    if(missing.length>0){showWarning("❗ Campos faltantes: "+missing.join(", "));return;}
+    if(isDuplicateById(id)){showWarning("Este evento ya está agregado a la lista");return;}
+    let resultArray=[id,dateTime,"",sixthLine,address,round,beat,lat,lon,"","",sivve||""];
+    let result=resultArray.join("\t");
+    const entry=document.createElement("div");
+    entry.className="log-entry single-event";
+    const span=document.createElement("span");
+    span.className="log-content single-event";
     entry.appendChild(span);
     log.appendChild(entry);
-
-    animateTextScramble(span, result, 10, () => {
+    animateTextScramble(span,result,10,()=>{
         sortLogChronologically();
         updateCounter();
+        selectLogText();
         showWarning("✔ Evento único agregado");
     });
-
-    singleInput.value = "";
+    singleInput.value="";
 }
-
-// --- OTHER FUNCTIONS ---
-function revertLog() {
-    const entries = [...log.querySelectorAll(".log-entry")];
-    entries.reverse().forEach(e => log.appendChild(e));
+function revertLog(){
+    const entries=[...log.querySelectorAll(".log-entry")];
+    entries.reverse().forEach(e=>log.appendChild(e));
 }
-
-function updateCounter() {
-    counter.textContent =
-        "CANTIDAD DE EVENTOS CARGADOS: " +
-        document.querySelectorAll(".log-entry").length;
+function updateCounter(){
+    counter.textContent="CANTIDAD DE EVENTOS CARGADOS: "+document.querySelectorAll(".log-entry").length;
 }
-
-function limpiarTodo() {
-    input.value = "";
-    singleInput.value = "";
-    log.innerHTML = "";
+function limpiarTodo(){
+    input.value="";
+    singleInput.value="";
+    log.innerHTML="";
     updateCounter();
 }
-
-function copiarTodo() {
-    if (!log.textContent.trim()) {
-        showWarning("⚠ No hay eventos para copiar");
-        return;
-    }
-
-    const text = Array.from(log.querySelectorAll(".log-content"))
-                      .map(e => e.textContent)
-                      .join("\n");
-
-    navigator.clipboard.writeText(text).then(() => {
-        showWarning("✔ Todos los eventos copiados al portapapeles");
-    }).catch(() => {
-        showWarning("⚠ Error al copiar al portapapeles");
-    });
+function copiarTodo(){
+    if(!log.textContent.trim()){showWarning("⚠ No hay eventos para copiar");return;}
+    const text=Array.from(log.querySelectorAll(".log-content")).map(e=>e.textContent).join("\n");
+    navigator.clipboard.writeText(text).then(()=>{showWarning("✔ Todos los eventos copiados al portapapeles");}).catch(()=>{showWarning("⚠ Error al copiar al portapapeles");});
 }
-</script>
 
+const title = document.querySelector("h2");
+title.innerHTML = title.textContent.split("").map(letter=>`<span class="float-letter">${letter}</span>`).join("");
+const titleLetters=document.querySelectorAll(".float-letter");
+titleLetters.forEach(span=>{
+    const delay=(Math.random()*2).toFixed(2);
+    const duration=(1.5+Math.random()).toFixed(2);
+    span.style.animationDelay=`${delay}s`;
+    span.style.animationDuration=`${duration}s`;
+});
+
+document.addEventListener("mousemove", e=>{
+    const centerX=window.innerWidth/2;
+    const centerY=window.innerHeight/4;
+    const offsetX=(e.clientX-centerX)/100;
+    const offsetY=(e.clientY-centerY)/100;
+    titleLetters.forEach((span,i)=>{
+        const phase=i*0.15;
+        const x=offsetX*(1+Math.sin(phase));
+        const y=offsetY*(1+Math.cos(phase));
+        span.style.transform=`translateY(${y}px) translateX(${x}px) rotate(${x*5}deg) skew(${y}deg, ${x}deg)`;
+    });
+});
+</script>
 </body>
 </html>
