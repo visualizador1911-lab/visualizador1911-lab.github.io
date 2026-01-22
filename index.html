@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -137,8 +136,9 @@ button:hover { background-color: #B22222; }
         <div id="breakdown">
             <span id="falsos">Falsos Positivos: 0</span> | 
             <span id="unicos">Eventos Disparo Único: 0</span> | 
-            <span id="multiple">Eventos Multiple Disparo: 0</span>
-		<span id="nota">(Solo desglosa los Eventos cargados al por mayor, no cuenta individuales)</span>
+            <span id="multiple">Eventos Multiple Disparo: 0</span> |
+            <span id="undefinedTipo">Tipo de disparo sin definir: 0</span>
+            <span id="nota">(Solo desglosa los Eventos cargados al por mayor, los individuales cuentan como indefinidos)</span>
         </div>
     </div>
     <button onclick="copiarTodo()">Copiar todos los eventos</button>
@@ -282,8 +282,6 @@ function processInput(){
     input.value = "";
 }
 
-
-
 singleInput.addEventListener("paste",function(){singleInput.value="";setTimeout(()=>{convertirSingle();},0);});
 
 function convertirSingle(){
@@ -343,27 +341,27 @@ function updateCounter(){
 
 function updateBreakdown() {
     const entries = document.querySelectorAll(".log-entry .log-content");
-    let falsos = 0, unico = 0, multiple = 0;
+    let falsos = 0, unico = 0, multiple = 0, undefinedTipo = 0;
 
     entries.forEach(e => {
         const tipo = e.textContent.split("\t")[10];
         if (tipo === "NO HAY TIROTEO") falsos++;
         else if (tipo === "UNICO-DISPARO") unico++;
         else if (tipo === "MULTIPLE-DISPARO") multiple++;
+        else if (!tipo || tipo.trim() === "") undefinedTipo++;
     });
 
-    const falsosSpan = document.getElementById("falsos");
-    const unicosSpan = document.getElementById("unicos");
-    const multipleSpan = document.getElementById("multiple");
+    document.getElementById("falsos").textContent = `Falsos Positivos: ${falsos}`;
+    document.getElementById("falsos").style.color = "gray";
 
-    falsosSpan.textContent = `Falsos Positivos: ${falsos}`;
-    falsosSpan.style.color = "gray";
+    document.getElementById("unicos").textContent = `Eventos Disparo Único: ${unico}`;
+    document.getElementById("unicos").style.color = "orange";
 
-    unicosSpan.textContent = `Eventos Disparo Único: ${unico}`;
-    unicosSpan.style.color = "orange";
+    document.getElementById("multiple").textContent = `Eventos Multiple Disparo: ${multiple}`;
+    document.getElementById("multiple").style.color = "red";
 
-    multipleSpan.textContent = `Eventos Multiple Disparo: ${multiple}`;
-    multipleSpan.style.color = "red";
+    document.getElementById("undefinedTipo").textContent = `Tipo de disparo sin definir: ${undefinedTipo}`;
+    document.getElementById("undefinedTipo").style.color = "white";
 }
 
 function limpiarTodo(){
@@ -388,19 +386,6 @@ titleLetters.forEach(span=>{
     const duration=(1.5+Math.random()).toFixed(2);
     span.style.animationDelay=`${delay}s`;
     span.style.animationDuration=`${duration}s`;
-});
-
-document.addEventListener("mousemove", e=>{
-    const centerX=window.innerWidth/2;
-    const centerY=window.innerHeight/4;
-    const offsetX=(e.clientX-centerX)/100;
-    const offsetY=(e.clientY-centerY)/100;
-    titleLetters.forEach((span,i)=>{
-        const phase=i*0.15;
-        const x=offsetX*(1+Math.sin(phase));
-        const y=offsetY*(1+Math.cos(phase));
-        span.style.transform=`translateY(${y}px) translateX(${x}px) rotate(${x*5}deg) skew(${y}deg, ${x}deg)`;
-    });
 });
 </script>
 </body>
