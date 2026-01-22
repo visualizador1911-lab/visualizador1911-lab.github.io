@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -213,52 +214,75 @@ function selectLogText(){
 input.addEventListener("paste",()=>setTimeout(processInput,0));
 
 function processInput(){
-    if(!input.value.trim())return;
-    let blocks=input.value.replace(/\r\n/g,"\n").trim().split(/\n\s*\n+/);
-    blocks.forEach(block=>{
-        let lines=block.split("\n").map(l=>l.trim()).filter(Boolean);
-        if(lines.length<7)return;
-        const firstLine=lines[0];
-        let id=lines[1]||"";
-        let mainLine=lines[2]||"";
-        let cadLine=lines[3]||"";
-        let barrio=lines[4]||"";
-        let coordLine=lines[6]||"";
-        const dtMatch=mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
-        if(!dtMatch)return;
-        let dateTime=dtMatch[1];
-        const parts=mainLine.split("\t");
-        let address=parts[1]||"";
-        let zona=parts[2]||"";
-        let rounds=parts[3]||"";
-        let lat="",lon="";
-        const coords=coordLine.split("\t");
-        if(coords.length===2){lat=coords[0].replace(",",".");lon=coords[1].replace(",",".");}
-        let cad=cadLine.match(/\d+/)?.[0]||"";
-        let tipo="";
-        const firstLineNorm=firstLine.trim().toLowerCase();
-        if(firstLineNorm==="único-disparo"||firstLineNorm==="single gunshot")tipo="UNICO-DISPARO";
-        else if(firstLineNorm==="multiple-disparo"||firstLineNorm==="multiple gunshots")tipo="MULTIPLE-DISPARO";
-        else if(firstLineNorm==="probable-disparo"||firstLineNorm==="probable gunfire")tipo=(rounds==="1")?"UNICO-DISPARO":"MULTIPLE-DISPARO";
-        else if(firstLineNorm==="no hay tiroteo"||firstLineNorm==="not gunfire")tipo="NO HAY TIROTEO";
-        if(!id||!dateTime||!lat||!lon)return;
-        if(isDuplicateById(id))return;
-        const result=[id,dateTime,"",zona,address,rounds,barrio,lat,lon,"",tipo,cad].join("\t");
-        const entry=document.createElement("div");
-        entry.className="log-entry";
-        const span=document.createElement("span");
-        span.className="log-content";
+    if(!input.value.trim()) return;
+
+    let blocks = input.value.replace(/\r\n/g, "\n").trim().split(/\n\s*\n+/);
+    blocks.forEach(block => {
+        let lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+        if(lines.length < 6) return; // minimum lines
+
+        const firstLine = lines[0];
+        let id = lines[1] || "";
+        let mainLine = lines[2] || "";
+        let cadLine = "";
+        let barrio = "";
+        let coordLine = "";
+
+        // Detect if CAD line exists (line with digits only)
+        if(/\d+/.test(lines[3])) {
+            cadLine = lines[3];
+            barrio = lines[4] || "";
+            coordLine = lines[6] || "";
+        } else {
+            // CAD missing, shift lines
+            cadLine = "";
+            barrio = lines[3] || "";
+            coordLine = lines[5] || "";
+        }
+
+        const dtMatch = mainLine.match(/^(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/);
+        if(!dtMatch) return;
+        let dateTime = dtMatch[1];
+
+        const parts = mainLine.split("\t");
+        let address = parts[1] || "";
+        let zona = parts[2] || "";
+        let rounds = parts[3] || "";
+
+        let lat = "", lon = "";
+        const coords = coordLine.split("\t");
+        if(coords.length === 2) { lat = coords[0].replace(",", "."); lon = coords[1].replace(",", "."); }
+
+        let cad = cadLine.match(/\d+/)?.[0] || "";
+        let tipo = "";
+        const firstLineNorm = firstLine.trim().toLowerCase();
+        if(firstLineNorm === "único-disparo" || firstLineNorm === "single gunshot") tipo = "UNICO-DISPARO";
+        else if(firstLineNorm === "multiple-disparo" || firstLineNorm === "multiple gunshots") tipo = "MULTIPLE-DISPARO";
+        else if(firstLineNorm === "probable-disparo" || firstLineNorm === "probable gunfire") tipo = (rounds === "1") ? "UNICO-DISPARO" : "MULTIPLE-DISPARO";
+        else if(firstLineNorm === "no hay tiroteo" || firstLineNorm === "not gunfire") tipo = "NO HAY TIROTEO";
+
+        if(!id || !dateTime || !lat || !lon) return;
+        if(isDuplicateById(id)) return;
+
+        const result = [id, dateTime, "", zona, address, rounds, barrio, lat, lon, "", tipo, cad].join("\t");
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        const span = document.createElement("span");
+        span.className = "log-content";
         entry.appendChild(span);
         log.appendChild(entry);
-        animateTextScramble(span,result,10,()=>{
+
+        animateTextScramble(span, result, 10, () => {
             sortLogChronologically();
             updateCounter();
             updateBreakdown();
             selectLogText();
         });
     });
-    input.value="";
+    input.value = "";
 }
+
+
 
 singleInput.addEventListener("paste",function(){singleInput.value="";setTimeout(()=>{convertirSingle();},0);});
 
