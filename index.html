@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,12 +7,13 @@
 <style>
 html, body, * { cursor: url("./CURSOR.cur"), auto; }
 body {
-    background-color: #3E1F1F;
-    background-image: 
-        repeating-linear-gradient(45deg, #4B2B2B 0px, #4B2B2B 40px, #6B1F1F 40px, #6B1F1F 80px),
-        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0, rgba(255, 255, 255, 0.05) 40px, transparent 40px, transparent 80px);
-    background-size: 80px 80px;
-    background-repeat: repeat;
+    background-color: #000; /* fallback while image loads */
+    background-image: url("./fondo.jpg");
+    background-size: cover;       /* fills the screen */
+    background-position: center;  /* keeps it centered */
+    background-repeat: no-repeat; /* no tiling */
+    background-attachment: fixed; /* optional: parallax effect */
+
     color: #E0CFCF;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -21,9 +23,10 @@ h2 {
     font-size: 3.5em;
     text-align: center;
     font-weight: bold;
+    color: #F5E5E5;
     background: linear-gradient(45deg, #8B0000, #B22222, #FF4C4C);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-text-fill-color: solid;
     -webkit-text-stroke: 2px black;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.3), -1px -1px 1px rgba(0,0,0,0.2);
 }
