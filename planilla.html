@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Procesador Excel</title>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- SheetJS -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+<h1>Formateador de planillas para POWERBI shotspotter</h1>
+
+<div class="container">
+
+    <label>Elegir el exportado presionando "examinar"</label>
+    <input type="file" id="fileInput" accept=".xlsx,.xlsm">
+
+    <button onclick="processFile()">Procesar</button>
+
+    <div class="progress-container">
+        <div id="progressBar"></div>
+    </div>
+
+    <div id="status">Esperando archivo...</div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
