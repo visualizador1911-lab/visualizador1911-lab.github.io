@@ -13,53 +13,80 @@ const OUTPUT_COLUMNS = [
 ];
 
 const SPANISH_MONTHS = {
-"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,
-"jul":7,"ago":8,"sep":9,"set":9,"oct":10,"nov":11,"dic":12
+    "ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,
+    "jul":7,"ago":8,"sep":9,"set":9,"oct":10,"nov":11,"dic":12
 };
 
-// ✅ FIX: normalize headers properly
 function normalizeHeader(h) {
     return h
         ? h.toString()
-            .replace(/\u00A0/g, " ")   // fix hidden Excel spaces
+            .replace(/\u00A0/g, " ")
             .trim()
             .toLowerCase()
         : "";
 }
 
+// FIXED: preserve time and avoid UTC shifts
 function excelDateToJS(serial) {
-    const utc_days = Math.floor(serial - 25569);
-    return new Date(utc_days * 86400 * 1000);
+    const excelEpoch = new Date(1899, 11, 30);
+    return new Date(excelEpoch.getTime() + serial * 86400000);
 }
 
 function parseSpanishDate(str) {
     if (!str) return null;
 
-    str = str.toString().toLowerCase();
+    str = str.toString().trim().toLowerCase();
 
-    const match = str.match(/(\d{1,2})[-\/ ]([a-zñ]+)/);
+    const match = str.match(/^(\d{1,2})[-\/ ]([a-zñ]+)$/);
     if (!match) return null;
 
-    const day = parseInt(match[1]);
+    const day = Number(match[1]);
     const month = SPANISH_MONTHS[match[2]];
+
     if (!month) return null;
 
-    return new Date(2026, month - 1, day);
+    return new Date(new Date().getFullYear(), month - 1, day);
+}
+
+// NEW: parses dd/mm/yyyy hh:mm:ss explicitly
+function parseDateTime(str) {
+    if (!str) return null;
+
+    str = str.toString().trim();
+
+    const match = str.match(
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+    );
+
+    if (!match) return null;
+
+    return new Date(
+        Number(match[3]),
+        Number(match[2]) - 1,
+        Number(match[1]),
+        Number(match[4] || 0),
+        Number(match[5] || 0),
+        Number(match[6] || 0)
+    );
 }
 
 function parseAnyDate(value) {
+
     if (!value) return null;
 
-    if (value instanceof Date) return value;
+    if (value instanceof Date)
+        return value;
 
-    if (typeof value === "number") return excelDateToJS(value);
+    if (typeof value === "number")
+        return excelDateToJS(value);
 
     if (typeof value === "string") {
-        let d = parseSpanishDate(value);
+
+        let d = parseDateTime(value);
         if (d) return d;
 
-        let parsed = new Date(value);
-        if (!isNaN(parsed)) return parsed;
+        d = parseSpanishDate(value);
+        if (d) return d;
     }
 
     return null;
@@ -87,7 +114,6 @@ function processFile() {
 
         const headers = rows[0];
 
-        // ✅ FIXED mapping (normalized keys)
         const inputMap = {};
 
         headers.forEach((h, i) => {
@@ -104,6 +130,7 @@ function processFile() {
             const row = rows[i] || [];
 
             let fecha = parseAnyDate(row[inputMap["fecha/hora"]]);
+
             let year = fecha ? fecha.getFullYear() : "";
             let month = fecha ? (fecha.getMonth() + 1) : "";
 
@@ -114,8 +141,7 @@ function processFile() {
                 let value = "";
 
                 const key = normalizeHeader(col);
-
-                if (key === "shotspotter id") {
+				                if (key === "shotspotter id") {
                     value = row[inputMap["shotspotter id"]];
                 }
 
