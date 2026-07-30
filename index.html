@@ -58,6 +58,36 @@
 }
 </style>
 <style>
+
+
+#chat-widget h3 {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+#chat-toggle {
+    background:#8B0000;
+    color:white;
+    border:none;
+    border-radius:50%;
+    width:24px;
+    height:24px;
+    padding:0;
+    margin:0;
+    font-size:14px;
+    cursor:pointer;
+}
+
+#chat-toggle:hover {
+    background:#B22222;
+}
+
+#chat-content {
+    overflow:hidden;
+    transition:height 0.3s ease, opacity 0.3s ease;
+}
+
 html, body, * { cursor: url("./CURSOR.cur"), auto; }
 body {
     background-color: #000; /* fallback while image loads */
@@ -182,7 +212,12 @@ button:hover { background-color: #B22222; }
 <h2>FORMATEAR TEXTO SHOTSPOTTER</h2>
 <div id="chat-widget">
 
-<h3>CHAT NOVEDADES</h3>
+<h3>
+    CHAT NOVEDADES
+    <button id="chat-toggle" onclick="toggleChat()">▲</button>
+</h3>
+
+<div id="chat-content">
 
 <div id="chat-log">
 Loading...
@@ -196,6 +231,8 @@ maxlength="200"
 placeholder="Escribir novedad..."
 onkeydown="if(event.key==='Enter') enviarChat();"
 >
+
+</div>
 
 </div>
 <div id="textarea-container">
@@ -690,6 +727,30 @@ setInterval(
     cargarChat,
     5000
 );
+
+
+let chatMinimized = false;
+
+function toggleChat(){
+
+    const content = document.getElementById("chat-content");
+    const button = document.getElementById("chat-toggle");
+
+    chatMinimized = !chatMinimized;
+
+    if(chatMinimized){
+
+        content.style.display = "none";
+        button.textContent = "▼";
+
+    } else {
+
+        content.style.display = "block";
+        button.textContent = "▲";
+
+    }
+}
+
 </script>
 </body>
 </html>
