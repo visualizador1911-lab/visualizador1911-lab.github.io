@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -289,50 +290,128 @@ function processInput(){
 
 singleInput.addEventListener("paste",function(){singleInput.value="";setTimeout(()=>{convertirSingle();},0);});
 
-function convertirSingle(){
-    if(!singleInput.value.trim())return;
-    let lines=singleInput.value.split("\n").map(l=>l.trim());
-    let line1=lines[0]||"";
-    let line2=lines[2]||"";
-    let line3=lines[3]||"";
-    let line5,line6,line7,sivve="";
-    if(lines.length===8){line5=lines[4]||"";line6=lines[5]||"";line7=lines[6]||"";}
-    else if(lines.length===9){line5=lines[5]||"";line6=lines[6]||"";line7=lines[7]||"";let lineWithCAD=lines[4]||"";const sivveMatch=lineWithCAD.match(/CAD\s*ID\s*(\d{8})/i);sivve=sivveMatch?sivveMatch[1]:"";}
-    let sixthLine=line6;
-    let id=(line3.match(/ID\s*([A-Za-z0-9-]+)/i)||[])[1]||"";
-    let dateTime=((line2.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/)||[]).slice(1).join(" "))||"";
-    let address=(line1.match(/(?:en|at)\s+(.*)/i)||[])[1]||line1;
-    let round=(line1.match(/^(\d+)/)||[])[1]||"";
-    let beat="";
-    let beatSectorMatch=line5.match(/\b(Beat|Sector)\b[:\s]*(.*)$/iu);
-    if(beatSectorMatch) beat=beatSectorMatch[2].trim();
-    let lat="",lon="";
-    const coordMatch=line7.match(/(-?\d+(?:,\d+)*)\s*,\s*(-?\d+(?:,\d+)*)/);
-    if(coordMatch){lat=coordMatch[1].replace(/,/g,".");lon=coordMatch[2].replace(/,/g,".");}
-    let missing=[];
-    if(!id) missing.push("ID");
-    if(!dateTime) missing.push("Fecha/Hora");
-    if(!address) missing.push("Dirección");
-    if(!lat) missing.push("Latitud (X)");
-    if(!lon) missing.push("Longitud (Y)");
-    if(missing.length>0){showWarning("❗ Campos faltantes: "+missing.join(", "));return;}
-    if(isDuplicateById(id)){showWarning("Este evento ya está agregado a la lista");return;}
-    let resultArray=[id,dateTime,"",sixthLine,address,round,beat,lat,lon,"","",sivve||""];
-    let result=resultArray.join("\t");
-    const entry=document.createElement("div");
-    entry.className="log-entry single-event";
-    const span=document.createElement("span");
-    span.className="log-content single-event";
+function convertirSingle() {
+    if (!singleInput.value.trim()) return;
+
+    const lines = singleInput.value
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(Boolean);
+
+    // ---------- FIND EACH LINE ----------
+    const firstLine = lines[0] || "";
+
+    const shotspotterLine = lines.find(l => /ShotSpotter\s*ID/i.test(l)) || "";
+    const cadLine = lines.find(l => /CAD\s*ID/i.test(l)) || "";
+    const dateLine = lines.find(l => /\d{2}\/\d{2}\/\d{4}\s*@\s*\d{2}:\d{2}:\d{2}/.test(l)) || "";
+    const districtLine = lines.find(l => /Distrito|Sector|Beat/i.test(l)) || "";
+    const barrioLine = lines.find(l => /^UY/i.test(l)) || "";
+    const coordLine = lines.find(l => /^-?\d+,\d+\s*,\s*-?\d+,\d+/.test(l)) || "";
+
+    // ---------- ID ----------
+    const id =
+        (shotspotterLine.match(/ShotSpotter\s*ID\s*([A-Za-z0-9-]+)/i) || [])[1] || "";
+
+    // ---------- CAD ----------
+    const sivve =
+        (cadLine.match(/CAD\s*ID\s*(\d+)/i) || [])[1] || "";
+
+    // ---------- DATE ----------
+    const dateMatch = dateLine.match(/(\d{2}\/\d{2}\/\d{4})\s*@\s*(\d{2}:\d{2}:\d{2})/);
+    const dateTime = dateMatch
+        ? `${dateMatch[1]} ${dateMatch[2]}`
+        : "";
+
+    // ---------- ADDRESS ----------
+    let address = firstLine;
+
+    // remove leading "1 Bala", "2 Balas", etc.
+    address = address.replace(/^\d+\s+\S+\s+en\s+/i, "");
+
+    // fallback
+    if (!address)
+        address = (firstLine.match(/(?:en|at)\s+(.*)/i) || [])[1] || "";
+
+    // ---------- ROUNDS ----------
+    const round =
+        (firstLine.match(/^(\d+)/) || [])[1] || "";
+
+    // ---------- ZONE / DISTRICT ----------
+    let zona = "";
+
+    const districtMatch =
+        districtLine.match(/Sector\s+(.*)$/i) ||
+        districtLine.match(/Beat[:\s]*(.*)$/i);
+
+    if (districtMatch)
+        zona = districtMatch[1].trim();
+
+    // ---------- COORDINATES ----------
+    let lat = "";
+    let lon = "";
+
+    const coordMatch = coordLine.match(
+        /(-?\d+(?:,\d+)?)\s*,\s*(-?\d+(?:,\d+)?)/
+    );
+
+    if (coordMatch) {
+        lat = coordMatch[1].replace(",", ".");
+        lon = coordMatch[2].replace(",", ".");
+    }
+
+    // ---------- VALIDATION ----------
+    const missing = [];
+
+    if (!id) missing.push("ShotSpotter ID");
+    if (!dateTime) missing.push("Fecha/Hora");
+    if (!address) missing.push("Dirección");
+    if (!lat) missing.push("Latitud");
+    if (!lon) missing.push("Longitud");
+
+    if (missing.length) {
+        showWarning("❗ Campos faltantes: " + missing.join(", "));
+        return;
+    }
+
+    if (isDuplicateById(id)) {
+        showWarning("⚠ Este evento ya está agregado");
+        return;
+    }
+
+    // ---------- BUILD RESULT ----------
+    const result = [
+        id,
+        dateTime,
+        "",
+        barrioLine,
+        address,
+        round,
+        zona,
+        lat,
+        lon,
+        "",
+        "",
+        sivve
+    ].join("\t");
+
+    const entry = document.createElement("div");
+    entry.className = "log-entry single-event";
+
+    const span = document.createElement("span");
+    span.className = "log-content single-event";
+
     entry.appendChild(span);
     log.appendChild(entry);
-    animateTextScramble(span,result,10,()=>{
+
+    animateTextScramble(span, result, 10, () => {
         sortLogChronologically();
         updateCounter();
         updateBreakdown();
         selectLogText();
         showWarning("✔ Evento único agregado");
     });
-    singleInput.value="";
+
+    singleInput.value = "";
 }
 
 function revertLog(){
