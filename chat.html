@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pastebin Chat Test</title>
+
+<style>
+body {
+    background:#111;
+    color:#eee;
+    font-family:Arial, sans-serif;
+    padding:30px;
+}
+
+h2 {
+    color:#ff5555;
+}
+
+#chat {
+    width:500px;
+    min-height:150px;
+    background:#222;
+    border:2px solid #8b0000;
+    padding:15px;
+    white-space:pre-wrap;
+    font-family:monospace;
+}
+
+textarea {
+    width:500px;
+    height:70px;
+    margin-top:15px;
+    background:#333;
+    color:white;
+    border:2px solid #8b0000;
+    padding:10px;
+    font-size:16px;
+}
+
+button {
+    margin-top:10px;
+    padding:10px 25px;
+    background:#8b0000;
+    color:white;
+    border:0;
+    cursor:pointer;
+}
+
+button:hover {
+    background:#b22222;
+}
+
+#status {
+    margin-top:15px;
+    color:#ffcc00;
+    font-family:monospace;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>Shared Pastebin Chat Test</h2>
+
+<div id="chat">
+Loading...
+</div>
+
+<textarea id="message"
+maxlength="200"
+placeholder="Write a message..."></textarea>
+
+<br>
+
+<button onclick="sendMessage()">SEND</button>
+
+<div id="status"></div>
+
+
+<script>
+
+const pasteID = "V4CP5ELV";
+
+const rawURL =
+"https://pastebin.com/raw/" + pasteID;
+
+
+// Put your Pastebin developer key here
+const apiKey = "g7DKVUHds6kCqAgakhUVl4S8Tfa-EWs4";
+
+
+async function loadChat(){
+
+    try {
+
+        let response = await fetch(
+            rawURL + "?t=" + Date.now()
+        );
+
+        let text = await response.text();
+
+        document.getElementById("chat").textContent =
+            text || "(empty)";
+
+    }
+    catch(error){
+
+        document.getElementById("chat").textContent =
+            "READ ERROR: " + error;
+
+    }
+
+}
+
+
+
+function getTimestamp(){
+
+    const d = new Date();
+
+    const days = [
+        "Dom",
+        "Lun",
+        "Mar",
+        "Mie",
+        "Jue",
+        "Vie",
+        "Sab"
+    ];
+
+    let day =
+        days[d.getDay()];
+
+    let date =
+        String(d.getDate()).padStart(2,"0")
+        + "/"
+        +
+        String(d.getMonth()+1).padStart(2,"0")
+        + "/"
+        +
+        d.getFullYear();
+
+
+    let time =
+        String(d.getHours()).padStart(2,"0")
+        + ":"
+        +
+        String(d.getMinutes()).padStart(2,"0")
+        + ":"
+        +
+        String(d.getSeconds()).padStart(2,"0");
+
+
+    return `[${day} ${date} ${time}]`;
+
+}
+
+
+
+async function sendMessage(){
+
+    let box =
+        document.getElementById("message");
+
+
+    let msg =
+        box.value.trim();
+
+
+    if(!msg)
+        return;
+
+
+    let current =
+        await fetch(
+            rawURL + "?t=" + Date.now()
+        )
+        .then(r=>r.text());
+
+
+    let lines =
+        current
+        .split("\n")
+        .filter(x=>x.trim());
+
+
+    lines.push(
+        getTimestamp() + " " + msg
+    );
+
+
+    while(lines.length > 5){
+        lines.shift();
+    }
+
+
+    let newText =
+        lines.join("\n");
+
+
+    let data =
+        new URLSearchParams();
+
+
+    data.append(
+        "api_dev_key",
+        apiKey
+    );
+
+
+    data.append(
+        "api_option",
+        "paste"
+    );
+
+
+    data.append(
+        "api_paste_code",
+        newText
+    );
+
+
+    data.append(
+        "api_paste_name",
+        "shared_chat_log"
+    );
+
+
+    data.append(
+        "api_paste_private",
+        "1"
+    );
+
+
+    try {
+
+        let result =
+            await fetch(
+                "https://pastebin.com/api/api_post.php",
+                {
+                    method:"POST",
+                    body:data
+                }
+            )
+            .then(r=>r.text());
+
+
+        document.getElementById("status").textContent =
+            "Pastebin response: " + result;
+
+
+        box.value="";
+
+
+    }
+    catch(error){
+
+        document.getElementById("status").textContent =
+            "WRITE ERROR: " + error;
+
+    }
+
+}
+
+
+
+loadChat();
+
+
+setInterval(
+    loadChat,
+    5000
+);
+
+
+</script>
+
+</body>
+</html>
