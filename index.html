@@ -1,10 +1,62 @@
 
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>FORMATEAR TEXTO SHOTSPOTTER</title>
+<style>
+/* FLOATING CHAT */
+
+#chat-widget {
+    position:absolute;
+    top:20px;
+    right:20px;
+    width:300px;
+    background:#222;
+    border:2px solid #8B0000;
+    padding:10px;
+    z-index:10;
+    box-shadow:0 0 15px black;
+}
+
+#chat-widget h3 {
+    margin:0 0 8px 0;
+    color:#ff5555;
+    font-size:18px;
+    text-align:center;
+}
+
+#chat-log {
+    height:90px;
+    background:#000;
+    border:1px solid #8B0000;
+    padding:8px;
+    overflow-y:auto;
+    white-space:pre-wrap;
+    font-family:monospace;
+    font-size:12px;
+}
+
+#chat-update {
+    height:15px;
+    margin:4px 0;
+    color:#888;
+    font-size:11px;
+    font-family:monospace;
+}
+
+#chat-message {
+    width:100%;
+    box-sizing:border-box;
+    background:#333;
+    color:white;
+    border:1px solid #8B0000;
+    padding:6px;
+    font-family:monospace;
+}
+</style>
 <style>
 html, body, * { cursor: url("./CURSOR.cur"), auto; }
 body {
@@ -128,6 +180,24 @@ button:hover { background-color: #B22222; }
 </head>
 <body>
 <h2>FORMATEAR TEXTO SHOTSPOTTER</h2>
+<div id="chat-widget">
+
+<h3>CHAT NOVEDADES</h3>
+
+<div id="chat-log">
+Loading...
+</div>
+
+<div id="chat-update"></div>
+
+<input 
+id="chat-message"
+maxlength="200"
+placeholder="Escribir novedad..."
+onkeydown="if(event.key==='Enter') enviarChat();"
+>
+
+</div>
 <div id="textarea-container">
     <textarea id="input" rows="12" placeholder="LUEGO DE REALIZADO EL FILTRO EN SHOTSPOTTER PRESIONAR CTRL+A, CTRL+C Y PEGAR AQUI EL RESULTADO"></textarea>
     <textarea id="singleInput" rows="12" placeholder="PEGAR AQUÍ DE A UN EVENTO"></textarea>
@@ -471,6 +541,155 @@ titleLetters.forEach(span=>{
     span.style.animationDelay=`${delay}s`;
     span.style.animationDuration=`${duration}s`;
 });
+// ===============================
+// CHAT NOVEDADES
+// ===============================
+
+const CHAT_URL =
+"https://script.google.com/macros/s/AKfycbyJ6yjRGaTCH5pdBSKhyWGW5uXpW7ttg1jvKbE6oNN-IbSHFCfa4hE1rQrtLsOrLKco/exec";
+
+
+async function cargarChat(){
+
+    try {
+
+        const response =
+        await fetch(
+            CHAT_URL + "?t=" + Date.now()
+        );
+
+        const data =
+        await response.json();
+
+
+        document.getElementById("chat-log")
+        .textContent =
+        data.join("\n");
+
+
+        const box =
+        document.getElementById("chat-log");
+
+        box.scrollTop =
+        box.scrollHeight;
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+    }
+
+}
+
+
+
+async function enviarChat(){
+
+    const input =
+    document.getElementById("chat-message");
+
+    const update =
+    document.getElementById("chat-update");
+
+
+    const msg =
+    input.value.trim();
+
+
+    if(!msg)
+        return;
+
+
+    input.value="";
+
+
+    const now = new Date();
+
+const timestamp =
+"[" +
+String(now.getDate()).padStart(2,"0") +
+"/" +
+String(now.getMonth()+1).padStart(2,"0") +
+"/" +
+now.getFullYear() +
+" " +
+String(now.getHours()).padStart(2,"0") +
+":" +
+String(now.getMinutes()).padStart(2,"0") +
+":" +
+String(now.getSeconds()).padStart(2,"0") +
+"] ";
+
+
+const finalMessage =
+timestamp + msg;
+
+
+await fetch(
+    CHAT_URL +
+    "?message=" +
+    encodeURIComponent(finalMessage) +
+    "&t=" +
+    Date.now()
+);
+
+
+    let count=5;
+
+
+    update.textContent =
+    "Actualizando en " + count;
+
+
+    const timer =
+    setInterval(()=>{
+
+
+        count--;
+
+
+        if(count>0){
+
+            update.textContent =
+            "Actualizando en " + count;
+
+        }
+
+        else{
+
+            clearInterval(timer);
+
+            update.textContent =
+            "Actualizando...";
+
+
+            cargarChat();
+
+
+            setTimeout(()=>{
+
+                update.textContent="";
+
+            },1000);
+
+        }
+
+
+    },1000);
+
+}
+
+
+
+cargarChat();
+
+
+setInterval(
+    cargarChat,
+    5000
+);
 </script>
 </body>
 </html>
